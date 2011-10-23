@@ -1,0 +1,14 @@
+Name:		tensor
+Version:	0.0
+Cabal-Version:	>= 1.8
+License:	GPL-3
+License-File:	LICENSE
+Author:		Federico Squartini, Nicola Squartini
+Maintainer:	Nicola Squartini <tensor5@gmail.com>
+Synopsis:	A completely type-safe library for linear algebra
+Category:	Data
+Build-Type:	Simple
+
+Library
+  Build-Depends:	base == 4.*, HList, vector
+  Exposed-Modules:	Data.Ordinal, Data.MultiIndex, Data.Tensor
