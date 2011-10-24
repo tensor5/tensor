@@ -18,16 +18,15 @@ data MultiIndex i ⇒ Tensor i a = Tensor [Int] (V.Vector a)
 -- ottimizzare tail
 instance (Show a) ⇒ Show (Tensor i a) where
     show (Tensor [] x) = show (x V.! 0)
-    show (Tensor (i:[]) x) = "[" ++ showT x i
-                             where showT v n | n == 1 = (show (v V.! 0)) ++ "]"
-                                             | n > 1 = (show (v V.! 0))
-                                                       ++ "," ++
-                                                       (showT (V.tail v) (n-1))
-    show (Tensor (i:is) x) = "[" ++ showT x (i*(foldl1 (*) is))
-        where showT v n | n == foldl1 (*) is = (show (Tensor is v)) ++ "]"
-                        | otherwise = (show (Tensor is v))
-                                      ++ "," ++
-                                      (showT  (V.drop (foldl1 (*) is) v) (n - (foldl1 (*) is)))
+    show (Tensor (i:[]) x) = "[" ++ showT x i ""
+        where showT v n acc | n == 1 = acc ++ (show (v V.! 0)) ++ "]"
+                            | n > 1 = showT (V.tail v) (n-1)
+                                      (acc ++ (show (v V.! 0)) ++ ",")
+    show (Tensor (i:is) x) = "[" ++ showT x (i:is) []
+        where showT v (j:js) acc | j == 1 = acc ++ (show (Tensor js v)) ++ "]"
+                                 | j > 1 = showT (V.drop (foldl1 (*) js) v)
+                                           ((j-1):js)
+                                           (acc ++ (show (Tensor js v)) ++  ",")
 
 class FromVector e a | a → e where
     fromVector ∷ V.Vector e -> a
