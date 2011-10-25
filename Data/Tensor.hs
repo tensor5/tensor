@@ -57,18 +57,6 @@ instance (Bounded i, MultiIndex i) ⇒ MultiIndexable i a (Tensor i a) where
     (Tensor d x) ! j = x V.! ((multiIndex2Linear j) - 1)
     dims _ = maxBound
 
-class TensorProduct n a b c | a → n, b → n, a b → c where
-    (⊗) ∷ a → b → c
-
-instance (Num a, HAppend i j k) ⇒ TensorProduct a (Tensor i a) (Tensor j a) (Tensor k a)
-    where
-      (Tensor d x) ⊗ (Tensor e y) =
-          Tensor (d ++ e) (
-                           V.generate ((V.length x) * (V.length y)) genP
-                          )
-              where genP = \n → (x V.! (n `div` (V.length y))) *
-                           (y V.! (n `mod` (V.length y)))
-
 type ColumnVector n a = Tensor (n :|: End) a
 
 type Vector n a = ColumnVector n a
@@ -120,11 +108,11 @@ instance (Product a (m :|: End) t1 t2 t3, MultiIndexable i a t2, HHead i m) ⇒
         x .*. y = prod ((hHead $ dims y) :|: End) x y
 
 
-class TensorProduct' n a b c | a → n, b → n, a b → c where
-    tProd ∷ a → b → c
+class TensorProduct n a b c | a → n, b → n, a b → c where
+    (⊗) ∷ a → b → c
 
-instance (Num a, Product a End t1 t2 t3) ⇒ TensorProduct' a t1 t2 t3 where
-    tProd = prod End
+instance (Num a, Product a End t1 t2 t3) ⇒ TensorProduct a t1 t2 t3 where
+    (⊗) = prod End
 
 class Transpose a b| a → b where
     transpose ∷ a → b
