@@ -29,7 +29,7 @@ instance (Show a) ⇒ Show (Tensor i a) where
                                            (acc ++ (show (Tensor js v)) ++  ",")
 
 class FromVector e a | a → e where
-    fromVector ∷ V.Vector e -> a
+    fromVector ∷ V.Vector e → a
 
 instance (Bounded i, MultiIndex i) ⇒ FromVector e (Tensor i e) where
     fromVector x = toTensor maxBound x
