@@ -205,6 +205,24 @@ instance (Fractional a, Ordinal i, Ordinal j, Ordinal k) ⇒
                         where a n = z V.! ((quot n d2)*(d2+d3) + (rem n d2))
                               b n = z V.! ((quot n d3)*(d2+d3) + (rem n d3) + d2)
 
+class (Fractional a, Ordinal i) ⇒ SquareMatrix a i m | m → a, m → i where
+    unit ∷ m
+    inverse ∷ m → Maybe m
+
+instance (Fractional a, Bounded i, Ordinal i) ⇒  SquareMatrix a i (Tensor (i :|: (i :|: End)) a) where
+    unit = u
+           where u = Tensor d $ V.generate (i*i) g
+                 g n = if rem n (i + 1) == 0
+                       then 1
+                       else 0
+                 i = head d
+                 d = dimensions $ dims (asTypeOf undefined u)
+    inverse m = let (f,s) = solveLinSystem m u in
+                if f == u
+                then Just s
+                else Nothing
+                    where u = asTypeOf unit m
+
 -- | Row switch on Vector representation of the matrix
 rowSwitchOnVec ∷ Int -- ^ First row to switsh
                → Int -- ^ Second row to switch
