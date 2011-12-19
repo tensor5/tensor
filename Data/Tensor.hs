@@ -114,13 +114,14 @@ class TensorProduct n a b c | a → n, b → n, a b → c where
 instance (Num a, Product a End t1 t2 t3) ⇒ TensorProduct a t1 t2 t3 where
     (⊗) = prod End
 
-class Transpose a b| a → b where
+class Transpose a b | a → b where
     transpose ∷ a → b
 
-
------ WRONG
-instance (MReverse i j) ⇒ Transpose (Tensor i a) (Tensor j a) where
-    transpose (Tensor d x) = Tensor (reverse d) (V.reverse x)
+instance (Ordinal i, Ordinal j) ⇒
+    Transpose (Tensor (i :|: (j :|: End)) a) (Tensor (j :|: (i :|: End)) a)
+        where
+          transpose (Tensor [d1,d2] x) = Tensor [d2,d1] (V.generate (d1*d2) tr)
+              where tr n = x V.! ((rem n d1)*d2 + (quot n d1))
 
 class DotProduct n a b c | a b → c, a → n, b → n where
     dot ∷ a → b → c
