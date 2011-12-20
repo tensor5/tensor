@@ -209,6 +209,7 @@ instance (Fractional a, Ordinal i, Ordinal j, Ordinal k) ⇒
 class (Fractional a, Ordinal i) ⇒ SquareMatrix a i m | m → a, m → i where
     unit ∷ m
     inverse ∷ m → Maybe m
+    tr ∷ m → a
 
 instance (Fractional a, Bounded i, Ordinal i) ⇒  SquareMatrix a i (Tensor (i :|: (i :|: End)) a) where
     unit = u
@@ -223,6 +224,10 @@ instance (Fractional a, Bounded i, Ordinal i) ⇒  SquareMatrix a i (Tensor (i :
                 then Just s
                 else Nothing
                     where u = asTypeOf unit m
+    tr (Tensor [d,d'] x) = trace 0 0
+        where trace i acc = if i < d*d
+                            then trace (i + d + 1) (acc + (x V.! i))
+                            else acc
 
 -- | Row switch on Vector representation of the matrix
 rowSwitchOnVec ∷ Int -- ^ First row to switsh
