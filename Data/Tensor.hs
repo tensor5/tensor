@@ -12,11 +12,11 @@ import Data.MultiIndex
 import Data.Ordinal
 import qualified Data.Vector as V
 
-data MultiIndex i ⇒ Tensor i a = Tensor [Int] (V.Vector a)
+data MultiIndex i ⇒ Tensor i e = Tensor [Int] (V.Vector e)
                                deriving Eq
 
 -- ottimizzare tail
-instance (Show a) ⇒ Show (Tensor i a) where
+instance (Show e) ⇒ Show (Tensor i e) where
     show (Tensor [] x) = show (x V.! 0)
     show (Tensor (i:[]) x) = "[" ++ showT x i ""
         where showT v n acc | n == 1 = acc ++ (show (v V.! 0)) ++ "]"
@@ -28,8 +28,8 @@ instance (Show a) ⇒ Show (Tensor i a) where
                                            ((j-1):js)
                                            (acc ++ (show (Tensor js v)) ++  ",")
 
-class FromVector e a | a → e where
-    fromVector ∷ V.Vector e → a
+class FromVector e t | t → e where
+    fromVector ∷ V.Vector e → t
 
 instance (Bounded i, MultiIndex i) ⇒ FromVector e (Tensor i e) where
     fromVector x = toTensor maxBound x
@@ -40,20 +40,20 @@ instance (Bounded i, MultiIndex i) ⇒ FromVector e (Tensor i e) where
                   where l = card i
 
 
-class FromList e a | a → e where
-    fromList ∷ [e] → a
+class FromList e t | t → e where
+    fromList ∷ [e] → t
 
 instance (Bounded i, MultiIndex i) ⇒ FromList a (Tensor i a) where
     fromList = fromVector . V.fromList
 
 -- | In any instance of @'MultiIndexable'@ @'dims'@ should be
 -- independent of its argument and work on @'undefined'@.
-class (MultiIndex i) ⇒ MultiIndexable i e a | a → e, a → i where
-    (!) ∷ a → i → e
-    dims ∷ a → i
+class (MultiIndex i) ⇒ MultiIndexable i e t | t → e, t → i where
+    (!) ∷ t → i → e
+    dims ∷ t → i
 
 ----
-instance (Bounded i, MultiIndex i) ⇒ MultiIndexable i a (Tensor i a) where
+instance (Bounded i, MultiIndex i) ⇒ MultiIndexable i e (Tensor i e) where
     (Tensor d x) ! j = x V.! ((multiIndex2Linear j) - 1)
     dims _ = maxBound
 
@@ -65,13 +65,13 @@ type RowVector n a = Tensor (One :|: (n :|: End)) a
 
 type Matrix m n a = Tensor (m :|: (n :|: End)) a
 
-class (Num a) ⇒ VectorSpace a v | v → a where
+class (Num e) ⇒ VectorSpace e v | v → e where
     zero ∷ v
-    (*.) ∷ a → v → v
+    (*.) ∷ e → v → v
     (.+.) ∷ v → v → v
 --    dimension ∷ v → Integer
 
-instance (Bounded i, MultiIndex i, Num a) ⇒ VectorSpace a (Tensor i a) where
+instance (Bounded i, MultiIndex i, Num e) ⇒ VectorSpace e (Tensor i e) where
     zero = z
            where z = Tensor d $ V.replicate l 0
                  l = card $ dims (asTypeOf undefined z)
@@ -80,8 +80,8 @@ instance (Bounded i, MultiIndex i, Num a) ⇒ VectorSpace a (Tensor i a) where
     (Tensor d x) .+. (Tensor e y) = Tensor d (V.zipWith (+) x y)
 --    dimension _ = dim (undefined :: i)
 
-class (MultiIndex i) ⇒ Product n i a b c | a → n, b → n, i a b → c where
-    prod ∷ i → a → b → c
+class (MultiIndex i) ⇒ Product e i t1 t2 t3 | t1 → e, t2 → e, i t1 t2 → e where
+    prod ∷ i → t1 → t2 → t3
 
 
 --instance (Num a, MultiIndex j, HAppend i j k, HAppend j l m, HAppend i l n) ⇒
@@ -100,22 +100,22 @@ instance (Num a, MultiIndex j, DropAt j k i, TakeUntil j m l, HAppend i l n) ⇒
                           (drop (length $ dimensions i) d2)
 
 
-class MatrixProduct n a b c | a b → c, a → n, b → n where
-    (.*.) ∷ a → b → c
+class MatrixProduct e t1 t2 t3 | t1 t2 → t3, t1 → t2, t2 → e where
+    (.*.) ∷ t1 → t2 → t3
 
-instance (Product a (m :|: End) t1 t2 t3, MultiIndexable i a t2, HHead i m) ⇒
-    MatrixProduct a t1 t2 t3 where
+instance (Product e (m :|: End) t1 t2 t3, MultiIndexable i e t2, HHead i m) ⇒
+    MatrixProduct e t1 t2 t3 where
         x .*. y = prod ((hHead $ dims y) :|: End) x y
 
 
-class TensorProduct n a b c | a → n, b → n, a b → c where
-    (⊗) ∷ a → b → c
+class TensorProduct e t1 t2 t3 | t1 → e, t2 → e, t1 t2 → t3 where
+    (⊗) ∷ t1 → t2 → t3
 
-instance (Num a, Product a End t1 t2 t3) ⇒ TensorProduct a t1 t2 t3 where
+instance (Num e, Product e End t1 t2 t3) ⇒ TensorProduct e t1 t2 t3 where
     (⊗) = prod End
 
-class Transpose a b | a → b where
-    transpose ∷ a → b
+class Transpose t1 t2 | t1 → t2 where
+    transpose ∷ t1 → t2
 
 instance (Ordinal i, Ordinal j) ⇒
     Transpose (Tensor (i :|: (j :|: End)) a) (Tensor (j :|: (i :|: End)) a)
@@ -123,23 +123,23 @@ instance (Ordinal i, Ordinal j) ⇒
           transpose (Tensor [d1,d2] x) = Tensor [d2,d1] (V.generate (d1*d2) tr)
               where tr n = x V.! ((rem n d1)*d2 + (quot n d1))
 
-class DotProduct n a b c | a b → c, a → n, b → n where
+class DotProduct e a b c | a b → c, a → e, b → e where
     dot ∷ a → b → c
 
 instance (MultiIndexable i a t1, MultiIndexable i a t2, Product a i t1 t2 t3) ⇒
     DotProduct a t1 t2 t3 where
         dot x y = prod (dims x) x y
 
-class (Num a, Ordinal i, Ordinal j) ⇒
-    RMatrix a i j m | m → a, m → i, m → j where
-                        rowSwitch ∷ i → i → m → m
-                        rowMult ∷ i → a → m → m
-                        rowAdd ∷ i → a → i → m → m
-                        colSwitch ∷ j → j → m → m
-                        colMult ∷ j → a → m → m
-                        colAdd ∷ j → a → j → m → m
+class (Num e, Ordinal i, Ordinal j) ⇒
+    RMatrix e i j t |  t → e, t → i, t → j where
+                        rowSwitch ∷ i → i → t → t
+                        rowMult ∷ i → e → t → t
+                        rowAdd ∷ i → e → i → t → t
+                        colSwitch ∷ j → j → t → t
+                        colMult ∷ j → e → t → t
+                        colAdd ∷ j → e → j → t → t
 
-instance (Num a, Ordinal i, Ordinal j) ⇒ RMatrix a i j (Tensor (i :|: (j :|: End)) a) where
+instance (Num e, Ordinal i, Ordinal j) ⇒ RMatrix e i j (Tensor (i :|: (j :|: End)) e) where
     rowSwitch i1 i2 (Tensor [d1,d2] v) | i1 /= i2 =
                                            Tensor [d1,d2] (rowSwitchOnVec
                                                            (fromOrdinal i1)
@@ -179,20 +179,20 @@ instance (Num a, Ordinal i, Ordinal j) ⇒ RMatrix a i j (Tensor (i :|: (j :|: E
                                                         v
                                                        )
 
-class (Fractional a, Ordinal i, Ordinal j) ⇒ EchelonForm a i j m | m → a, m → i, m → j where
-    rowEchelonForm ∷ m → m
+class (Fractional e, Ordinal i, Ordinal j) ⇒ EchelonForm e i j t | t → e, t → i, t → j where
+    rowEchelonForm ∷ t → t
 
-class (Fractional a, Ordinal i, Ordinal j) ⇒ LinearSystem a i j m n | m → a, m → i, m → j, n → a, n → i where
-    solveLinSystem ∷ m → n → (m,n)
+class (Fractional e, Ordinal i, Ordinal j) ⇒ LinearSystem e i j t1 t2 | t1 → e, t1 → i, t1 → j, e → t1, e → i where
+    solveLinSystem ∷ t1 → t2 → (t1,t2)
 
 
-instance (Fractional a, Ordinal i, Ordinal j) ⇒
-    EchelonForm a i j (Tensor (i :|: (j :|: End)) a) where
+instance (Fractional e, Ordinal i, Ordinal j) ⇒
+    EchelonForm e i j (Tensor (i :|: (j :|: End)) e) where
         rowEchelonForm (Tensor [d1,d2] v)
             = Tensor [d1,d2] (rowEchelonOnVec d1 d2 0 v)
 
-instance (Fractional a, Ordinal i, Ordinal j, Ordinal k) ⇒
-    LinearSystem a i j (Tensor (i :|: (j :|: End)) a) (Tensor (i :|: (k :|: End)) a) where
+instance (Fractional e, Ordinal i, Ordinal j, Ordinal k) ⇒
+    LinearSystem e i j (Tensor (i :|: (j :|: End)) e) (Tensor (i :|: (k :|: End)) e) where
         solveLinSystem (Tensor [d1,d2] v) (Tensor [d1',d3] w)
             = split $ rowEchelonOnVec d1 d2 d3 (cat v w)
               where cat x y  = V.generate (d1*(d2+d3)) gen
@@ -206,12 +206,12 @@ instance (Fractional a, Ordinal i, Ordinal j, Ordinal k) ⇒
                         where a n = z V.! ((quot n d2)*(d2+d3) + (rem n d2))
                               b n = z V.! ((quot n d3)*(d2+d3) + (rem n d3) + d2)
 
-class (Fractional a, Ordinal i) ⇒ SquareMatrix a i m | m → a, m → i where
-    unit ∷ m
-    inverse ∷ m → Maybe m
-    tr ∷ m → a
+class (Fractional e, Ordinal i) ⇒ SquareMatrix e i t | t → e, t → i where
+    unit ∷ t
+    inverse ∷ t → Maybe t
+    tr ∷ t → e
 
-instance (Fractional a, Bounded i, Ordinal i) ⇒  SquareMatrix a i (Tensor (i :|: (i :|: End)) a) where
+instance (Fractional e, Bounded i, Ordinal i) ⇒  SquareMatrix e i (Tensor (i :|: (i :|: End)) e) where
     unit = u
            where u = Tensor d $ V.generate (i*i) g
                  g n = if rem n (i + 1) == 0
