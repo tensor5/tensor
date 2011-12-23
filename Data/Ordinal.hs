@@ -22,13 +22,6 @@ module Data.Ordinal where
 
 import Data.Ord
 
--- | Class of ordered sets with n elements.
-class (Cardinal n, Ord n) => Ordinal n where
---    next :: n -> Succ n
-    fromOrdinal :: (Num i) => n -> i
-    toOrdinal :: (Num i) => i -> n
-
-
 -- | A set with one element.
 data One = One
            deriving Eq
@@ -43,7 +36,6 @@ instance Ord One where
 
 
 instance Ordinal One where
---    next One = Succ One
     fromOrdinal One = 1
     toOrdinal 1 = One
     toOrdinal _ = error "(toOrdinal n): n is out of bounds"
@@ -73,8 +65,6 @@ instance (Ord n) => Ord (Succ n) where
 
 
 instance (Ordinal n) => Ordinal (Succ n) where
---    next First = Succ First
---    next (Succ x) = Succ (next x)
     fromOrdinal First = 1
     fromOrdinal (Succ x) = 1 + fromOrdinal x
     toOrdinal x | x == 1 = First
