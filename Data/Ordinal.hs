@@ -4,6 +4,20 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+-- | In this module we provide a way to canonically define a totally
+-- ordered set with a given number of elements.  These types have a
+-- custom @'Show'@ instances so that their elements are displayed with
+-- usual decimal number.
+--
+--
+-- @'One'@ = {'One'} = {1}
+--
+-- @'Succ' 'One'@ = {@'First'@, @'Succ' 'One'@} = {1,2}
+--
+-- @'Succ' 'Succ' 'One'@ = {@'First'@, @'Succ' 'First'@, @'Succ'
+-- 'Succ' 'One'@} = {1,2,3}
+--
+-- ...
 module Data.Ordinal where
 
 import Data.Ord
@@ -38,8 +52,8 @@ instance Show One where
     show _ = "1"
 
 -- | If @n@ is a set with n elements, @'Succ' n@ is a set with n+1 elements.
-data Succ n = First
-            | Succ n
+data Succ n = First -- ^ The first element of the type.
+            | Succ n -- ^ The last @n@ elements.
               deriving Eq
 
 type Two = Succ One
@@ -78,9 +92,11 @@ instance Monad Succ where
     (Succ x) >>= f = f x
     return x = Succ x
 
--- | In any instance of @'Cardinal'@ the method @'card'@ should be
--- independent on the argument and work on @'undefined'@.
+
 class Cardinal n where
+    -- | Number of elements inside the type @n@. In any instance of
+    -- @'Cardinal'@ the method @'card'@ should be independent on the
+    -- argument and work on @'undefined'@.
     card :: (Num i) => n -> i
 
 instance Cardinal One where
@@ -91,8 +107,19 @@ instance (Cardinal a) => Cardinal (Succ a)  where
              where p :: Succ n -> n
                    p _ = undefined
 
+
+-- | Class of ordered sets with n elements. The methods in this class
+-- provide a convenient way to convert to and from a numeric type.
+class (Cardinal n, Ord n) => Ordinal n where
+    fromOrdinal :: (Num i) => n -> i
+    toOrdinal :: (Num i) => i -> n
+
+
+-- | Sum of types.
 class Sum a b where
     type Plus a b
+    -- | The sum of an element of @a@ and an element of @b@ is an
+    -- element in the type @'Plus' a b@.
     (<+>) :: a -> b -> Plus a b
 
 instance Sum m One where
