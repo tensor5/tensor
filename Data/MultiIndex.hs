@@ -77,13 +77,18 @@ instance Cardinal End where
 instance (Cardinal a, Cardinal b) ⇒ Cardinal (a :|: b) where
     card (x :|: y) = (card x) * (card y)
 
-{-
-class MultiIndexJoin a b c d | a b c -> d where
-    add :: b -> c -> d
+class MultiIndexConcat a b c where
+    type Concat a b c
 
-instance (Ordinal a1, Ordinal a2) ⇒ MultiIndexJoin HNil (HCons a1 b) (HCons a2 b) (HCons (Sum a1 a2) b) where
-    add (HCons x1 y) (HCons x2 y) = HCons (x1 ⨣ x2) y
--}
+instance (Ordinal i1, Ordinal i2, Sum i1 i2, MultiIndex is)
+    ⇒ MultiIndexConcat HZero (i1 :|: is) (i2 :|: is) where
+        type Concat HZero (i1 :|: is) (i2 :|: is) = (Plus i1 i2) :|: is
+
+instance (HNat n, Ordinal i, MultiIndex js, MultiIndex ks
+         , MultiIndexConcat n js ks)
+    ⇒ MultiIndexConcat (HSucc n) (i :|: js) (i :|: ks) where
+        type Concat (HSucc n) (i :|: js) (i :|: ks) = (i :|: Concat n js ks)
+
 
 type Prod a b = (HAppend a b c) ⇒ c
 
