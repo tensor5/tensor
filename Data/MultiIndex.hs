@@ -100,14 +100,11 @@ instance (MultiIndex is, MultiIndex js, MultiIndex ks, TakeUntil is js ks) ⇒
 class DropAt a b c | a b → c where
     dropAt ∷ a → b → c
 
-class MReverse a b | a -> b, b -> a
- where
-  mReverse:: a -> b
+class MReverse a b | a -> b, b -> a where
+    mReverse :: a -> b
 
-instance (HReverse' End a b, HReverse' End b c)
-      =>  MReverse a b
- where
-  mReverse x = hReverse' End x
+instance (HReverse' End a b, HReverse' End b a) ⇒ MReverse a b where
+    mReverse x = hReverse' End x
 
 instance HReverse' a End a where
     hReverse' x End = x
