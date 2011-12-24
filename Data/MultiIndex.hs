@@ -7,6 +7,18 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
+-- | We define the a multidimensional array of indices called
+-- @'MultiIndex'@. The canonical implementation of a @'MultiIndex'@ is
+-- an heterogeneous list of @'Ordinal'@s.  Below we illustrate some
+-- example of @'MultiIndex'@ types and the elements they contain.
+--
+-- @'Three' ':|:' 'End'@ = {(1),(2),(3)}
+--
+-- @'Three' ':|:' ('Two' ':|:' 'End')@ =
+-- {(1,1),(1,2),(2,1),(2,2),(3,1),(3,2)}
+--
+-- @'Three' ':|:' ('Two' ':|:' ('Two' ':|:' 'End'))@ =
+-- {(1,1,1),(1,1,2),(1,2,1),(1,2,2),(2,1,1),(2,1,2),(2,2,1),(2,2,2),(3,1,1),(3,1,2),(3,2,1),(3,2,2)}
 module Data.MultiIndex where
 
 import Data.HList
@@ -18,6 +30,7 @@ class (Cardinal i) ⇒ MultiIndex i where
     toMultiIndex ∷ (Num n) ⇒ [n] → i
     dimensions ∷ (Num n) ⇒ i → [n]
 
+-- | @'End'@ is used to signal the end of a list.
 data End = End
            deriving (Eq)
 
