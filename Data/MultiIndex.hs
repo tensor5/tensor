@@ -13,10 +13,10 @@ import Data.HList
 import Data.HList.FakePrelude
 import Data.Ordinal
 
-class (Cardinal a) ⇒ MultiIndex a where
-    fromMultiIndex ∷ (Num n) ⇒ a → [n]
-    toMultiIndex ∷ (Num n) ⇒ [n] → a
-    dimensions ∷ (Num n) ⇒ a → [n]
+class (Cardinal i) ⇒ MultiIndex i where
+    fromMultiIndex ∷ (Num n) ⇒ i → [n]
+    toMultiIndex ∷ (Num n) ⇒ [n] → i
+    dimensions ∷ (Num n) ⇒ i → [n]
 
 data End = End
            deriving (Eq)
@@ -43,14 +43,14 @@ instance HAppend End a a where
 instance (HAppend a b c) ⇒ HAppend (d :|: a) b (d :|: c) where
     hAppend (x :|: y) z = x :|: (hAppend y z)
 
-instance (Ordinal a, MultiIndex b) ⇒ MultiIndex (a :|: b) where
+instance (Ordinal i, MultiIndex is) ⇒ MultiIndex (i :|: is) where
     dimensions z = d (asTypeOf (undefined:|:undefined) z)
         where d (x :|: y) = (card x):(dimensions y)
     fromMultiIndex (x :|: y) = (fromOrdinal x):(fromMultiIndex y)
     toMultiIndex (x:xs) = (toOrdinal x) :|: (toMultiIndex xs)
     toMultiIndex [] = error "(toMultiIndex x): list too short"
 
-instance (Ordinal a, MultiIndex b) ⇒ Show (a :|: b) where
+instance (Ordinal i, MultiIndex is) ⇒ Show (i :|: is) where
     show (x :|: y) = show $ fromMultiIndex (x :|: y)
 
 instance Bounded End where
@@ -61,7 +61,7 @@ instance (Bounded a, Bounded b) ⇒ Bounded (a :|: b) where
     minBound = minBound :|: minBound
     maxBound = maxBound :|: maxBound
 
-multiIndex2Linear ∷ (MultiIndex a, Num n) ⇒ a → n
+multiIndex2Linear ∷ (MultiIndex i, Num n) ⇒ i → n
 multiIndex2Linear i = fromM l d
     where fromM a b = case a of
                         [] → 1
@@ -90,11 +90,11 @@ type Prod a b = (HAppend a b c) ⇒ c
 class TakeUntil a b c | a b → c where
     takeUntil ∷ a → b → c
 
-instance (MultiIndex a) ⇒ TakeUntil End a a where
+instance (MultiIndex i) ⇒ TakeUntil End i i where
     takeUntil _ x = x
 
-instance (MultiIndex b, MultiIndex c, MultiIndex d, TakeUntil b c d) ⇒
-    TakeUntil (a :|: b) (a :|: c) d where
+instance (MultiIndex is, MultiIndex js, MultiIndex ks, TakeUntil is js ks) ⇒
+    TakeUntil (i :|: is) (i :|: js) ks where
     takeUntil (x :|: y) (x' :|: z) = takeUntil y z
 
 class DropAt a b c | a b → c where
