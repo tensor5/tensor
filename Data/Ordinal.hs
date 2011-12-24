@@ -40,6 +40,16 @@ instance Ordinal One where
     toOrdinal 1 = One
     toOrdinal _ = error "(toOrdinal n): n is out of bounds"
 
+instance Enum One where
+    succ _ = error "Prelude.Enum.One.succ: bad argument"
+    pred _ = error "Prelude.Enum.One.succ: bad argument"
+    toEnum = toOrdinal
+    fromEnum = fromOrdinal
+    enumFrom _ = [One]
+    enumFromThen _ _ = [One]
+    enumFromTo _ _ = [One]
+    enumFromThenTo _ _ _ = [One]
+
 instance Show One where
     show _ = "1"
 
@@ -69,6 +79,18 @@ instance (Ordinal n) => Ordinal (Succ n) where
     fromOrdinal (Succ x) = 1 + fromOrdinal x
     toOrdinal x | x == 1 = First
                 | otherwise = Succ (toOrdinal (x - 1))
+
+instance (Bounded n, Enum n, Ordinal n) => Enum (Succ n) where
+    succ First = Succ minBound
+    succ (Succ n) = Succ (succ n)
+    toEnum = toOrdinal
+    fromEnum = fromOrdinal
+    enumFrom     x   = enumFromTo     x maxBound
+    enumFromThen x y = enumFromThenTo x y bound
+        where
+          bound | fromEnum y >= fromEnum x = maxBound
+                | otherwise                = minBound
+
 
 instance (Ordinal n) => Show (Succ n) where
     show x = show (fromOrdinal x)
