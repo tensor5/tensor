@@ -90,6 +90,13 @@ instance Cardinal End where
 instance (Cardinal a, Cardinal b) ⇒ Cardinal (a :|: b) where
     card (x :|: y) = (card x) * (card y)
 
+class (MultiIndex i, HNat n) ⇒ Rank i n | i → n
+
+instance Rank End HZero
+
+instance (Ordinal i, MultiIndex is, HNat n, Rank is n)
+    ⇒ Rank (i :|: is) (HSucc n)
+
 class MultiIndexConcat a b c where
     type Concat a b c
 
