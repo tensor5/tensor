@@ -16,18 +16,21 @@ import qualified Data.Vector as V
 data Tensor i e = Tensor [Int] (V.Vector e)
                   deriving Eq
 
--- ottimizzare tail
+
 instance Show e => Show (Tensor i e) where
-    show (Tensor [] x) = show (x V.! 0)
-    show (Tensor (i:[]) x) = "[" ++ showT x i ""
-        where showT v n acc | n == 1 = acc ++ (show (v V.! 0)) ++ "]"
-                            | n > 1 = showT (V.tail v) (n-1)
-                                      (acc ++ (show (v V.! 0)) ++ ",")
-    show (Tensor (i:is) x) = "[" ++ showT x (i:is) []
-        where showT v (j:js) acc | j == 1 = acc ++ (show (Tensor js v)) ++ "]"
-                                 | j > 1 = showT (V.drop (foldl1 (*) js) v)
-                                           ((j-1):js)
-                                           (acc ++ (show (Tensor js v)) ++  ",")
+    showsPrec _ = showsT
+        where
+          showsT (Tensor [] v) = shows $ v V.! 0
+          showsT (Tensor [_] v) = shows (V.toList v)
+          showsT (Tensor (1:is) v) = showsT (Tensor is v) . (']':)
+          showsT (Tensor (i:is) v) | V.null v = id
+                                   | otherwise = ('[':) . showsT (Tensor is x) .
+                                                 (',':) .
+                                                 showsT (Tensor ((i-1):is) xs)
+              where
+                n = product is
+                (x,xs) = V.splitAt n v
+
 
 instance Functor (Tensor i) where
     fmap f (Tensor is v) = Tensor is (fmap f v)
