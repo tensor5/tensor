@@ -134,6 +134,5 @@ instance (MReverse a a', MReverse b b', MReverse c' c, TakeUntil a' b' c') ⇒
     DropAt a b c where
         dropAt x y = mReverse (takeUntil (mReverse x) (mReverse y))
 
-instance HHead (a :|: b) a
- where
-  hHead (x :|: _) = x
+instance HHead (a :|: b) a where
+    hHead (x :|: _) = x
