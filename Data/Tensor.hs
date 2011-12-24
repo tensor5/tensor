@@ -28,6 +28,10 @@ instance (Show e) => Show (Tensor i e) where
                                            ((j-1):js)
                                            (acc ++ (show (Tensor js v)) ++  ",")
 
+instance Functor (Tensor i) where
+    fmap f (Tensor is v) = (Tensor is (fmap f v))
+
+
 class FromVector e t | t -> e where
     fromVector ∷ V.Vector e -> t
 
