@@ -16,7 +16,7 @@ data MultiIndex i => Tensor i e = Tensor [Int] (V.Vector e)
                                deriving Eq
 
 -- ottimizzare tail
-instance (Show e) => Show (Tensor i e) where
+instance Show e => Show (Tensor i e) where
     show (Tensor [] x) = show (x V.! 0)
     show (Tensor (i:[]) x) = "[" ++ showT x i ""
         where showT v n acc | n == 1 = acc ++ (show (v V.! 0)) ++ "]"
@@ -29,7 +29,7 @@ instance (Show e) => Show (Tensor i e) where
                                            (acc ++ (show (Tensor js v)) ++  ",")
 
 instance Functor (Tensor i) where
-    fmap f (Tensor is v) = (Tensor is (fmap f v))
+    fmap f (Tensor is v) = Tensor is (fmap f v)
 
 
 class FromVector e t | t -> e where
@@ -58,7 +58,7 @@ class (MultiIndex i) => MultiIndexable i e t | t -> e, t -> i where
 
 ----
 instance (Bounded i, MultiIndex i) => MultiIndexable i e (Tensor i e) where
-    (Tensor d x) ! j = x V.! ((multiIndex2Linear j) - 1)
+    (Tensor d x) ! j = x V.! (multiIndex2Linear j - 1)
     dims _ = maxBound
 
 type ColumnVector n a = Tensor (n :|: End) a
