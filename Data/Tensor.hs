@@ -7,9 +7,9 @@
 
 module Data.Tensor where
 
-import Data.HList
-import Data.MultiIndex
-import Data.Ordinal
+import           Data.HList
+import           Data.MultiIndex
+import           Data.Ordinal
 import qualified Data.Vector as V
 
 data MultiIndex i => Tensor i e = Tensor [Int] (V.Vector e)
