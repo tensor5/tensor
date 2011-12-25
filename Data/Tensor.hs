@@ -12,8 +12,8 @@ import           Data.MultiIndex
 import           Data.Ordinal
 import qualified Data.Vector as V
 
-data MultiIndex i => Tensor i e = Tensor [Int] (V.Vector e)
-                               deriving Eq
+data Tensor i e = Tensor [Int] (V.Vector e)
+                  deriving Eq
 
 -- ottimizzare tail
 instance Show e => Show (Tensor i e) where
