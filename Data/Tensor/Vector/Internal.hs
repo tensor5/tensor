@@ -16,7 +16,6 @@ import qualified Data.Vector as V
 data Tensor i e = Tensor [Int] (V.Vector e)
                   deriving Eq
 
-
 instance Show e => Show (Tensor i e) where
     showsPrec _ = showsT
         where
@@ -34,6 +33,10 @@ instance Show e => Show (Tensor i e) where
 
 instance Functor (Tensor i) where
     fmap f (Tensor is v) = Tensor is (fmap f v)
+
+
+class FromVector e t | t -> e where
+    fromVector ∷ V.Vector e -> t
 
 
 instance (Bounded i, MultiIndex i) => FromVector e (Tensor i e) where
