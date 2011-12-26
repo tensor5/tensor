@@ -85,13 +85,13 @@ instance (Num a, MultiIndex j, DropAt j k i, TakeUntil j m l, HAppend i l n) =>
         prod i (Tensor d1 x) (Tensor d2 y) =
             Tensor d (V.generate l genP)
                 where lj = card i
-                      ll = (V.length y) `div` lj
-                      l = ((V.length x) `div` lj) * ll
-                      genP = \n -> mult ((n `div` ll)*lj) (n `mod` ll) 1 0
+                      ll = V.length y `div` lj
+                      l = (V.length x `div` lj) * ll
+                      genP n = mult ((n `div` ll) * lj) (n `mod` ll) 1 0
                       mult u v t acc | t <= lj = mult (u + 1) (v + ll) (t + 1)
                                                  ((x V.! u)*(y V.! v) + acc)
                                      | otherwise = acc
-                      d = (take ((length d1) - (length $ dimensions i)) d1) ++
+                      d = (take (length d1 - length (dimensions i)) d1) ++
                           (drop (length $ dimensions i) d2)
 
 
