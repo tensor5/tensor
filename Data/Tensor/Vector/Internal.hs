@@ -53,7 +53,7 @@ instance (Bounded i, MultiIndex i) => FromList a (Tensor i a) where
 
 
 instance (Bounded i, MultiIndex i) => MultiIndexable i e (Tensor i e) where
-    (Tensor d x) ! j = x V.! (multiIndex2Linear j - 1)
+    (Tensor _ x) ! j = x V.! (multiIndex2Linear j - 1)
     dims _ = maxBound
 
 
@@ -75,7 +75,7 @@ instance (Bounded i, MultiIndex i, Num e) => VectorSpace e (Tensor i e) where
                  l = card $ dims (asTypeOf undefined z)
                  d = dimensions $ dims (asTypeOf undefined z)
     a *. (Tensor d v) = Tensor d (V.map  (* a) v)
-    (Tensor d x) .+. (Tensor e y) = Tensor d (V.zipWith (+) x y)
+    (Tensor d x) .+. (Tensor _ y) = Tensor d (V.zipWith (+) x y)
 --    dimension _ = dim (undefined :: i)
 
 
