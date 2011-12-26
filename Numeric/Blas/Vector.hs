@@ -5,6 +5,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
+module Numeric.Blas.Vector where
+
 import           Data.MultiIndex
 import           Data.Ordinal
 import           Data.Tensor
