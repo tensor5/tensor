@@ -57,16 +57,16 @@ instance (Bounded i, MultiIndex i) => MultiIndexable i e (Tensor i e) where
     dims _ = maxBound
 
 
-type ColumnVector n a = Tensor (n :|: End) a
+type ColumnVector n = Tensor (n :|: End)
 
 
-type Vector n a = ColumnVector n a
+type Vector n = ColumnVector n
 
 
-type RowVector n a = Tensor (One :|: (n :|: End)) a
+type RowVector n = Tensor (One :|: (n :|: End))
 
 
-type Matrix m n a = Tensor (m :|: (n :|: End)) a
+type Matrix m n = Tensor (m :|: (n :|: End))
 
 
 instance (Bounded i, MultiIndex i, Num e) => VectorSpace e (Tensor i e) where
