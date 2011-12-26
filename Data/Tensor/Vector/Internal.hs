@@ -41,7 +41,7 @@ class FromVector e t | t -> e where
 instance (Bounded i, MultiIndex i) => FromVector e (Tensor i e) where
     fromVector x = toTensor maxBound x
         where toTensor ∷ MultiIndex i => i -> V.Vector a -> Tensor i a
-              toTensor i v | (V.length v) < l = error ("Length of vector must be at least "
+              toTensor i v | (V.length v) < l = error ("fromVector: length of vector must be at least "
                                        ++ (show l))
                            | otherwise = Tensor (dimensions i) (V.take l v)
                   where l = card i
