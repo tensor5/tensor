@@ -11,10 +11,11 @@ module Data.Tensor where
 import           Data.MultiIndex
 import           Data.Ordinal
 import qualified Data.Vector as V
+import           Data.Vector (Vector)
 
 
 class FromVector e t | t -> e where
-    fromVector ∷ V.Vector e -> t
+    fromVector ∷ Vector e -> t
 
 
 class FromList e t | t -> e where
