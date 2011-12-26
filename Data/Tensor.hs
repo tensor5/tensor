@@ -77,21 +77,23 @@ class DotProduct e a b c | a b -> c, a -> e, b -> e where
     dot ∷ a -> b -> c
 
 
-class (Num e, Ordinal i, Ordinal j) =>
-    RMatrix e i j t |  t -> e, t -> i, t -> j where
-                        rowSwitch ∷ i -> i -> t -> t
-                        rowMult ∷ i -> e -> t -> t
-                        rowAdd ∷ i -> e -> i -> t -> t
-                        colSwitch ∷ j -> j -> t -> t
-                        colMult ∷ j -> e -> t -> t
-                        colAdd ∷ j -> e -> j -> t -> t
+class (Num e, Ordinal i, Ordinal j) => RMatrix e i j t
+                                     | t -> e, t -> i, t -> j where
+    rowSwitch ∷ i -> i -> t -> t
+    rowMult ∷ i -> e -> t -> t
+    rowAdd ∷ i -> e -> i -> t -> t
+    colSwitch ∷ j -> j -> t -> t
+    colMult ∷ j -> e -> t -> t
+    colAdd ∷ j -> e -> j -> t -> t
 
 
-class (Fractional e, Ordinal i, Ordinal j) => EchelonForm e i j t | t -> e, t -> i, t -> j where
+class (Fractional e, Ordinal i, Ordinal j) => EchelonForm e i j t
+                                            | t -> e, t -> i, t -> j where
     rowEchelonForm ∷ t -> t
 
 
-class (Fractional e, Ordinal i, Ordinal j) => LinearSystem e i j t1 t2 | t1 -> e, t1 -> i, t1 -> j, e -> t1, e -> i where
+class (Fractional e, Ordinal i, Ordinal j) => LinearSystem e i j t1 t2
+                              | t1 -> e, t1 -> i, t1 -> j, e -> t1, e -> i where
     solveLinSystem ∷ t1 -> t2 -> (t1,t2)
 
 
