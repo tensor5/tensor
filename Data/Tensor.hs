@@ -8,16 +8,13 @@
 
 module Data.Tensor where
 
-import           Data.HList
 import           Data.MultiIndex
 import           Data.Ordinal
 import qualified Data.Vector as V
 
 
-
 class FromVector e t | t -> e where
     fromVector ∷ V.Vector e -> t
-
 
 
 class FromList e t | t -> e where
@@ -30,7 +27,6 @@ class MultiIndex i => MultiIndexable i e t | t -> e, t -> i where
     (!) ∷ t -> i -> e
     dims ∷ t -> i
 
-----
 
 
 class DirectSummable n t1 t2 e | t1 → e, t2 → e where
@@ -71,6 +67,7 @@ class MatrixProduct e t1 t2 t3 | t1 t2 -> t3, t1 -> t2, t2 -> e where
 class TensorProduct e t1 t2 t3 | t1 -> e, t2 -> e, t1 t2 -> t3 where
     (⊗) ∷ t1 -> t2 -> t3
 
+
 class Transpose t1 t2 | t1 -> t2 where
     transpose ∷ t1 -> t2
 
@@ -92,6 +89,7 @@ class (Num e, Ordinal i, Ordinal j) =>
 class (Fractional e, Ordinal i, Ordinal j) => EchelonForm e i j t | t -> e, t -> i, t -> j where
     rowEchelonForm ∷ t -> t
 
+
 class (Fractional e, Ordinal i, Ordinal j) => LinearSystem e i j t1 t2 | t1 -> e, t1 -> i, t1 -> j, e -> t1, e -> i where
     solveLinSystem ∷ t1 -> t2 -> (t1,t2)
 
@@ -100,4 +98,3 @@ class (Fractional e, Ordinal i) => SquareMatrix e i t | t -> e, t -> i where
     unit ∷ t
     inverse ∷ t -> Maybe t
     tr ∷ t -> e
-
