@@ -35,13 +35,13 @@ instance Functor (Tensor i) where
 
 
 class FromVector e t | t -> e where
-    fromVector ∷ V.Vector e -> t
+    fromVector :: V.Vector e -> t
 
 
 instance (Bounded i, MultiIndex i) => FromVector e (Tensor i e) where
     fromVector x = toTensor maxBound x
         where
-          toTensor ∷ MultiIndex i => i -> V.Vector e -> Tensor i e
+          toTensor :: MultiIndex i => i -> V.Vector e -> Tensor i e
           toTensor i v | V.length v < l = error ("fromVector: length of vector \
                                                  \must be at least " ++ show l)
                        | otherwise = Tensor (dimensions i) (V.take l v)
@@ -158,9 +158,8 @@ instance (Num e, Ordinal i, Ordinal j) => RMatrix e i j (Tensor (i :|: (j :|: En
                                                        )
 
 
-
 -- | Row switch on Vector representation of the matrix
-rowSwitchOnVec ∷ Int -- ^ First row to switsh
+rowSwitchOnVec :: Int -- ^ First row to switsh
                -> Int -- ^ Second row to switch
                -> Int -- ^ Number of rows
                -> Int -- ^ Number of columns
@@ -173,7 +172,7 @@ rowSwitchOnVec i1 i2 d e x = V.generate (d*e) rs
           off = e * (i2 - i1)
 
 -- | Column switch on Vector representation of the matrix
-colSwitchOnVec ∷ Int -- ^ First column to switsh
+colSwitchOnVec :: Int -- ^ First column to switch
                -> Int -- ^ Second column to switch
                -> Int -- ^ Number of rows
                -> Int -- ^ Number of columns
@@ -186,13 +185,13 @@ colSwitchOnVec j1 j2 d e x = V.generate (d*e) cs
           off =  j2 - j1
 
 -- | Row multiplication on Vector representation of the matrix
-rowMultOnVec ∷ (Num a)
-                 => Int -- ^ Row to multiply
-                 -> a -- ^ Multiplier
-                 -> Int -- ^ Number of rows
-                 -> Int -- ^ Number of columns
-                 -> V.Vector a -- ^ Input Vector
-                 -> V.Vector a -- ^ Output Vector
+rowMultOnVec :: Num a
+             => Int -- ^ Row to multiply
+             -> a -- ^ Multiplier
+             -> Int -- ^ Number of rows
+             -> Int -- ^ Number of columns
+             -> V.Vector a -- ^ Input Vector
+             -> V.Vector a -- ^ Output Vector
 rowMultOnVec i a d e x = V.generate (d*e) (\n ->
                                               if (e*(i - 1)) <= n && n < e*i
                                               then (x V.! n) * a
@@ -200,26 +199,26 @@ rowMultOnVec i a d e x = V.generate (d*e) (\n ->
                                           )
 
 -- | Column multiplication on Vector representation of the matrix
-colMultOnVec ∷ (Num a)
-                 => Int -- ^ Column to multiply
-                 -> a -- ^ Multiplier
-                 -> Int -- ^ Number of rows
-                 -> Int -- ^ Number of columns
-                 -> V.Vector a -- ^ Input Vector
-                 -> V.Vector a -- ^ Output Vector
+colMultOnVec :: Num a
+             => Int -- ^ Column to multiply
+             -> a -- ^ Multiplier
+             -> Int -- ^ Number of rows
+             -> Int -- ^ Number of columns
+             -> V.Vector a -- ^ Input Vector
+             -> V.Vector a -- ^ Output Vector
 colMultOnVec j a d e x = V.generate (d*e) (\n -> if rem n e == j - 1
-                                                then (x V.! n) * a
-                                                else x V.! n
+                                                 then (x V.! n) * a
+                                                 else x V.! n
                                           )
 
 -- | Row division on Vector representation of the matrix
-rowDivOnVec ∷ (Fractional a)
-                => Int -- ^ Row to divide
-                -> a -- ^ Divisor
-                -> Int -- ^ Number of rows
-                -> Int -- ^ Number of columns
-                -> V.Vector a -- ^ Input Vector
-                -> V.Vector a -- ^ Output Vector
+rowDivOnVec :: Fractional a
+            => Int -- ^ Row to divide
+            -> a -- ^ Divisor
+            -> Int -- ^ Number of rows
+            -> Int -- ^ Number of columns
+            -> V.Vector a -- ^ Input Vector
+            -> V.Vector a -- ^ Output Vector
 rowDivOnVec i a d e x = V.generate (d*e) (\n ->
                                              if (e*(i - 1)) <= n && n < e*i
                                              then (x V.! n) / a
@@ -227,41 +226,41 @@ rowDivOnVec i a d e x = V.generate (d*e) (\n ->
                                          )
 
 -- | Column division on Vector representation of the matrix
-colDivOnVec ∷ (Fractional a)
-                 => Int -- ^ Column to multiply
-                 -> a -- ^ Divisor
-                 -> Int -- ^ Number of rows
-                 -> Int -- ^ Number of columns
-                 -> V.Vector a -- ^ Input Vector
-                 -> V.Vector a -- ^ Output Vector
+colDivOnVec :: Fractional a
+            => Int -- ^ Column to multiply
+            -> a -- ^ Divisor
+            -> Int -- ^ Number of rows
+            -> Int -- ^ Number of columns
+            -> V.Vector a -- ^ Input Vector
+            -> V.Vector a -- ^ Output Vector
 colDivOnVec j a d e x = V.generate (d*e) (\n -> if rem n e == j - 1
                                                 then (x V.! n) / a
                                                 else x V.! n
                                           )
 
 -- | Row add on Vector representation of the matrix
-rowAddOnVec ∷ (Num a)
-                => Int -- ^ Row we add to
-                -> a -- ^ How much of the row we wish to add
-                -> Int -- ^ Row we add
-                -> Int -- ^ Number of rows
-                -> Int -- ^ Number of columns
-                -> V.Vector a -- ^ Input Vector
-                -> V.Vector a -- ^ Output Vector
+rowAddOnVec :: Num a
+            => Int -- ^ Row we add to
+            -> a -- ^ How much of the row we wish to add
+            -> Int -- ^ Row we add
+            -> Int -- ^ Number of rows
+            -> Int -- ^ Number of columns
+            -> V.Vector a -- ^ Input Vector
+            -> V.Vector a -- ^ Output Vector
 rowAddOnVec i1 a i2 d e x = V.generate (d*e) ra
     where ra n | e*(i1 -1) <= n && n < e*i1 = x V.! n + (x V.! (n + off))*a
                | otherwise = x V.! n
           off = e * (i2 - i1)
 
 -- | Column add on Vector representation of the matrix
-colAddOnVec ∷ (Num a)
-                => Int -- ^ Column we add to
-                -> a -- ^ How much of the column we wish to add
-                -> Int -- ^ Column we add
-                -> Int -- ^ Number of rows
-                -> Int -- ^ Number of columns
-                -> V.Vector a -- ^ Input Vector
-                -> V.Vector a -- ^ Output Vector
+colAddOnVec :: Num a
+            => Int -- ^ Column we add to
+            -> a -- ^ How much of the column we wish to add
+            -> Int -- ^ Column we add
+            -> Int -- ^ Number of rows
+            -> Int -- ^ Number of columns
+            -> V.Vector a -- ^ Input Vector
+            -> V.Vector a -- ^ Output Vector
 colAddOnVec j1 a j2 d e x = V.generate (d*e) ca
     where ca n | rem n e == j1 - 1
                    = x V.! n + (x V.! (n + off))*a
@@ -269,8 +268,8 @@ colAddOnVec j1 a j2 d e x = V.generate (d*e) ca
           off = j2 - j1
 
 -- | Row subtract on Vector representation of the matrix
-rowSubOnVec ∷ (Num a)
-               => Int -- ^ Row we subtract to
+rowSubOnVec :: Num a
+            => Int -- ^ Row we subtract to
             -> a -- ^ How much of the row we wish to subtract
             -> Int -- ^ Row we add
             -> Int -- ^ Number of rows
@@ -283,14 +282,14 @@ rowSubOnVec i1 a i2 d e x = V.generate (d*e) rs
           off = e * (i2 - i1)
 
 -- | Column subtract on Vector representation of the matrix
-colSubOnVec ∷ (Num a)
-                => Int -- ^ Column we subtract to
-                -> a -- ^ How much of the column we wish to subtract
-                -> Int -- ^ Column we subtract
-                -> Int -- ^ Number of rows
-                -> Int -- ^ Number of columns
-                -> V.Vector a -- ^ Input Vector
-                -> V.Vector a -- ^ Output Vector
+colSubOnVec :: Num a
+            => Int -- ^ Column we subtract to
+            -> a -- ^ How much of the column we wish to subtract
+            -> Int -- ^ Column we subtract
+            -> Int -- ^ Number of rows
+            -> Int -- ^ Number of columns
+            -> V.Vector a -- ^ Input Vector
+            -> V.Vector a -- ^ Output Vector
 colSubOnVec j1 a j2 d e x = V.generate (d*e) ca
     where ca n | rem n e == j1 - 1
                    = x V.! n - (x V.! (n + off))*a
