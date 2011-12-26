@@ -108,7 +108,8 @@ instance (Ordinal i, Ordinal j) =>
     Transpose (Tensor (i :|: (j :|: End)) a) (Tensor (j :|: (i :|: End)) a)
         where
           transpose (Tensor [d1,d2] x) = Tensor [d2,d1] (V.generate (d1*d2) tr)
-              where tr n = x V.! ((rem n d1)*d2 + (quot n d1))
+              where tr n = let (q,r) = quotRem n d1
+                           in x V.! (r * d2 + q)
 
 
 instance (MultiIndexable i a t1, MultiIndexable i a t2, Product a i t1 t2 t3) =>
