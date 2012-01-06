@@ -72,6 +72,7 @@ instance (Ord n) => Ord (Succ n) where
     compare (Succ x) (Succ y) = compare x y
     compare (Succ x) First = GT
     compare First (Succ y) = LT
+    compare First First = EQ
 
 
 instance (Ordinal n) => Ordinal (Succ n) where
