@@ -12,6 +12,7 @@ import           Data.MultiIndex
 import           Data.Ordinal
 import           Data.Tensor
 import qualified Data.Vector as V
+import           Text.Show
 
 data Tensor i e = Tensor [Int] (V.Vector e)
                   deriving Eq
@@ -20,12 +21,10 @@ instance Show e => Show (Tensor i e) where
     showsPrec _ = showsT
         where
           showsT (Tensor [] v) = shows $ v V.! 0
-          showsT (Tensor [_] v) = shows (V.toList v)
+          showsT (Tensor [_] v) = showListWith shows (V.toList v)
           showsT (Tensor (1:is) v) = showsT (Tensor is v) . (']':)
-          showsT (Tensor (i:is) v) | V.null v = id
-                                   | otherwise = ('[':) . showsT (Tensor is x) .
-                                                 (',':) .
-                                                 showsT (Tensor ((i-1):is) xs)
+          showsT (Tensor (i:is) v) = ('[':) . showsT (Tensor is x) . (',':) .
+                                     showsT (Tensor ((i-1):is) xs)
               where
                 n = product is
                 (x,xs) = V.splitAt n v
