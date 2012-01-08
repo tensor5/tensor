@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -67,6 +68,23 @@ type RowVector n = Tensor (One :|: (n :|: End))
 
 
 type Matrix m n = Tensor (m :|: (n :|: End))
+
+
+instance (HNat2Integral n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
+    => DirectSummable n (Tensor i e) (Tensor j e) e where
+        type DirectSum n (Tensor i e) (Tensor j e) = (Tensor (Concat n i j) e)
+        cat n (Tensor d x) (Tensor d' y) = Tensor ((take i d) ++ e'') (V.generate l g)
+            where l = foldl1 (*) ((take i d) ++ e'')
+                  e = drop i d
+                  e' = drop i d'
+                  e'' = ((d !! i) + (d' !! i)) : (drop (i+1) d)
+                  m = foldl1 (*) e
+                  m' = foldl1 (*) e'
+                  m'' = foldl1 (*) e''
+                  g k = if rem k m'' < m
+                        then x V.! ((quot k m'')*m + (rem k m''))
+                        else y V.! ((quot k m'')*m' + (rem k m'') - m)
+                  i = hNat2Integral n
 
 
 instance (Bounded i, MultiIndex i, Num e) => VectorSpace e (Tensor i e) where
