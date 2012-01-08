@@ -109,8 +109,8 @@ instance (Num a, MultiIndex j, DropAt j k i, TakeUntil j m l, HAppend i l n) =>
                       mult u v t acc | t <= lj = mult (u + 1) (v + ll) (t + 1)
                                                  ((x V.! u)*(y V.! v) + acc)
                                      | otherwise = acc
-                      d = (take (length d1 - length (dimensions i)) d1) ++
-                          (drop (length $ dimensions i) d2)
+                      d = (take (length d1 - length (dimensions i::[Int])) d1)
+                          ++ (drop (length (dimensions i::[Int])) d2)
 
 
 instance (Product e (m :|: End) t1 t2 t3, MultiIndexable i e t2, HHead i m) =>
@@ -125,9 +125,9 @@ instance (Num e, Product e End t1 t2 t3) => TensorProduct e t1 t2 t3 where
 instance (Ordinal i, Ordinal j) =>
     Transpose (Tensor (i :|: (j :|: End)) a) (Tensor (j :|: (i :|: End)) a)
         where
-          transpose (Tensor [d1,d2] x) = Tensor [d2,d1] (V.generate (d1*d2) tr)
-              where tr n = let (q,r) = quotRem n d1
-                           in x V.! (r * d2 + q)
+          transpose (Tensor [d1,d2] x) = Tensor [d2,d1] (V.generate (d1*d2) t)
+              where t n = let (q,r) = quotRem n d1
+                          in x V.! (r * d2 + q)
 
 
 instance (MultiIndexable i a t1, MultiIndexable i a t2, Product a i t1 t2 t3) =>

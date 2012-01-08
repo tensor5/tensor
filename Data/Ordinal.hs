@@ -70,8 +70,8 @@ instance (Bounded n) => Bounded (Succ n) where
 
 instance (Ord n) => Ord (Succ n) where
     compare (Succ x) (Succ y) = compare x y
-    compare (Succ x) First = GT
-    compare First (Succ y) = LT
+    compare (Succ _) First = GT
+    compare First (Succ _) = LT
     compare First First = EQ
 
 
@@ -94,14 +94,14 @@ instance (Bounded n, Enum n, Ordinal n) => Enum (Succ n) where
 
 
 instance (Ordinal n) => Show (Succ n) where
-    show x = show (fromOrdinal x)
+    show x = show (fromOrdinal x :: Integer)
 
 instance Functor Succ where
-    fmap f First = First
+    fmap _ First = First
     fmap f (Succ x) = Succ (f x)
 
 instance Monad Succ where
-    First >>= f = First
+    First >>= _ = First
     (Succ x) >>= f = f x
     return x = Succ x
 
@@ -141,7 +141,7 @@ instance Sum m One where
 
 instance (Ordinal m, Sum m n, Ordinal (Plus m n)) => Sum m (Succ n) where
     type Plus m (Succ n) = Succ (Plus m n)
-    x <+> First = toOrdinal (1 + fromOrdinal x)
+    x <+> First = toOrdinal (1 + fromOrdinal x :: Integer)
     x <+> (Succ y) = Succ (x <+> y)
 
 
