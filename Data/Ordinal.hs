@@ -145,6 +145,24 @@ instance (Ordinal m, Sum m n, Ordinal (Plus m n)) => Sum m (Succ n) where
     x <+> (Succ y) = Succ (x <+> y)
 
 
+-- | Product of types.
+class Prod a b where
+    type Times a b
+    -- | The product of an element of @a@ and an element of @b@ is an
+    -- element in the type @'Times' a b@.
+    (<*>) :: a -> b -> Times a b
+
+instance (Ordinal m) => Prod m One where
+    type Times m One = m
+    x <*> One = toOrdinal (fromOrdinal x :: Integer)
+
+instance (Ordinal m, Prod m n, Sum m (Times m n), Ordinal (Plus m (Times m n)))
+    => Prod m (Succ n) where
+        type Times m (Succ n) = Plus m (Times m n)
+        x <*> First = toOrdinal (fromOrdinal x :: Integer)
+        x <*> (Succ y) = x <+> (x <*> y)
+
+
 -- | The type @a@ is @'Next'@ to @b@ if @a@ can be canonically
 -- embedded into @b@.
 class Next a b | a -> b where
