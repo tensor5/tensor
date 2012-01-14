@@ -314,3 +314,20 @@ colSubOnVec j1 a j2 d e x = V.generate (d*e) ca
                | otherwise = x V.! n
           off = j2 - j1
 
+getMatrixEntryOnVec :: Int -- ^ Number of rows
+                    -> Int -- ^ Number of columns
+                    -> Int
+                    -> Int
+                    -> V.Vector a
+                    -> a
+getMatrixEntryOnVec d e i j x = x V.! linearize [d,e] [i,j]
+
+generateMatrixOnVec :: Int -- ^ Number of rows
+                    -> Int -- ^ Number of columns
+                    -> (Int -> Int -> a)
+                    -> V.Vector a
+generateMatrixOnVec d e g = V.generate (d*e)
+                            (\n -> let [i,j] = unlinearize [d,e] n in
+                                   g i j
+                            )
+
