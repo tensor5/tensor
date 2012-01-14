@@ -76,3 +76,16 @@ class (Fractional e, Ordinal i) => SquareMatrix e i t | t -> e, t -> i where
     unit ∷ t
     inverse ∷ t -> Maybe t
     tr ∷ t -> e
+    -- | Computes the coefficient of the polynomial p(z)=det(A+zI)
+    -- using the method of /closed ordered walks/ (/clow/) illustrated
+    -- in the paper of G. Rote
+    -- <http://page.mi.fu-berlin.de/rote/Papers/pdf/Division-free+algorithms.pdf>.
+    -- The number of operations for the whole process is O(n^4), where
+    -- n is the number of rows of the matrix. The first coefficient is
+    -- the known term and equals the determinant, while the last one
+    -- is the coefficient of z^(n-1) and equals the trace. The
+    -- coefficient of z^n equals 1 and is not included in the
+    -- resulting list. The k-th coefficient is the sum of all
+    -- principal minors of order n-k+1.
+    charPoly :: t -> [e]
+    det :: t -> e
