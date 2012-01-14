@@ -17,4 +17,5 @@ Library
                    Data.Tensor
                    Data.Tensor.Vector
                    Numeric.Blas.Vector
-  Other-modules: Data.Tensor.Vector.Internal
+  Other-modules: Data.MultiIndex.Internal
+                 Data.Tensor.Vector.Internal

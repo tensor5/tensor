@@ -23,6 +23,7 @@ module Data.MultiIndex where
 
 import Data.HList
 import Data.HList.FakePrelude
+import Data.MultiIndex.Internal
 import Data.Ordinal
 
 class (Cardinal i) ⇒ MultiIndex i where
@@ -75,13 +76,8 @@ instance (Bounded a, Bounded b) ⇒ Bounded (a :|: b) where
     maxBound = maxBound :|: maxBound
 
 multiIndex2Linear ∷ (MultiIndex i, Num n) ⇒ i → n
-multiIndex2Linear i = fromM l d
-    where fromM a b = case a of
-                        [] → 1
-                        x:[] → x
-                        x:xs → ((head a) - 1) * (foldl1 (*) (tail b))
-                               + (fromM (tail a) (tail b))
-          l = fromMultiIndex i
+multiIndex2Linear i = linearize d l
+    where l = fromMultiIndex i
           d = dimensions i
 
 instance Cardinal End where

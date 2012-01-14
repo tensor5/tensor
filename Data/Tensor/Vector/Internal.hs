@@ -9,6 +9,7 @@ module Data.Tensor.Vector.Internal where
 
 import           Data.HList
 import           Data.MultiIndex
+import           Data.MultiIndex.Internal
 import           Data.Ordinal
 import           Data.Tensor
 import qualified Data.Vector as V
@@ -53,7 +54,7 @@ instance (Bounded i, MultiIndex i) => FromList a (Tensor i a) where
 
 
 instance (Bounded i, MultiIndex i) => MultiIndexable i e (Tensor i e) where
-    (Tensor _ x) ! j = x V.! (multiIndex2Linear j - 1)
+    (Tensor _ x) ! j = x V.! multiIndex2Linear j
     dims _ = maxBound
 
 
