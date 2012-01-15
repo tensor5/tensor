@@ -13,9 +13,11 @@ Library
   Build-Depends:   base == 4.*, HList, vector
   ghc-options:     -Wall -O2
   Exposed-Modules: Data.Ordinal
+                   Data.Tensor.LinearAlgebra
                    Data.MultiIndex
                    Data.Tensor
                    Data.Tensor.Vector
-                   Numeric.Blas.Vector
-  Other-modules: Data.MultiIndex.Internal
+  Other-modules: Data.Tensor.LinearAlgebra.Common
+                 Data.Tensor.LinearAlgebra.Vector
+                 Data.MultiIndex.Internal
                  Data.Tensor.Vector.Internal
