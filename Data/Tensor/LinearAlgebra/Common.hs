@@ -10,10 +10,10 @@ import           Data.Cardinal
 import           Data.Ordinal
 
 
-class Num e => VectorSpace e v | v -> e where
-    zero ∷ v
-    (*.) ∷ e -> v -> v
-    (.+.) ∷ v -> v -> v
+class VectorSpace v where
+    zero ∷ Num e => v e
+    (*.) ∷ Num e => e -> v e -> v e
+    (.+.) ∷ Num e => v e -> v e -> v e
 --    dimension ∷ v -> Integer
 
 

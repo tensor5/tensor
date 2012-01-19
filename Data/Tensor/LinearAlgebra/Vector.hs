@@ -20,13 +20,14 @@ import           Data.Tensor.Vector.Internal
 import           Data.TypeAlgebra
 import qualified Data.Vector as V
 
-instance (Bounded i, Cardinality i, MultiIndex i, Num e) => VectorSpace e (Tensor i e) where
-    zero = z
-           where z = Tensor d $ V.replicate l 0
-                 l = card $ dims (asTypeOf undefined z)
-                 d = dimensions $ dims (asTypeOf undefined z)
-    a *. (Tensor d v) = Tensor d (V.map  (* a) v)
-    (Tensor d x) .+. (Tensor _ y) = Tensor d (V.zipWith (+) x y)
+instance (Bounded i, Cardinality i, MultiIndex i) =>
+    VectorSpace (Tensor i) where
+        zero = z
+            where z = Tensor d $ V.replicate l 0
+                  l = card $ dims (asTypeOf undefined z)
+                  d = dimensions $ dims (asTypeOf undefined z)
+        a *. (Tensor d v) = Tensor d (V.map  (* a) v)
+        (Tensor d x) .+. (Tensor _ y) = Tensor d (V.zipWith (+) x y)
 --    dimension _ = dim (undefined :: i)
 
 

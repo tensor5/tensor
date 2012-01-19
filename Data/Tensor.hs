@@ -8,8 +8,8 @@ module Data.Tensor where
 import           Data.TypeList.MultiIndex
 
 
-class FromList e t | t -> e where
-    fromList ∷ [e] -> t
+class FromList t where
+    fromList ∷ [e] -> t e
 
 
 -- | In any instance of @'MultiIndexable'@ @'dims'@ should be

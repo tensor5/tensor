@@ -35,12 +35,12 @@ instance Functor (Tensor i) where
     fmap f (Tensor is v) = Tensor is (fmap f v)
 
 
-class FromVector e t | t -> e where
-    fromVector :: V.Vector e -> t
+class FromVector t where
+    fromVector :: V.Vector e -> t e
 
 
 instance (Bounded i, Cardinality i, MultiIndex i) =>
-    FromVector e (Tensor i e) where
+    FromVector (Tensor i) where
         fromVector x = toTensor maxBound x
             where
               toTensor :: (Cardinality i, MultiIndex i) =>
@@ -52,7 +52,7 @@ instance (Bounded i, Cardinality i, MultiIndex i) =>
 
 
 instance (Bounded i, Cardinality i, MultiIndex i) =>
-    FromList a (Tensor i a) where
+    FromList (Tensor i) where
         fromList = fromVector . V.fromList
 
 
