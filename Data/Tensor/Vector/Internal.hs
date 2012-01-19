@@ -7,9 +7,9 @@
 
 module Data.Tensor.Vector.Internal where
 
-import           Data.HList
-import           Data.MultiIndex
-import           Data.MultiIndex.Internal
+import           Data.Cardinal
+import           Data.TypeList.MultiIndex hiding (drop, take)
+import           Data.TypeList.MultiIndex.Internal
 import           Data.Ordinal
 import           Data.Tensor
 import qualified Data.Vector as V
@@ -39,18 +39,21 @@ class FromVector e t | t -> e where
     fromVector :: V.Vector e -> t
 
 
-instance (Bounded i, MultiIndex i) => FromVector e (Tensor i e) where
-    fromVector x = toTensor maxBound x
-        where
-          toTensor :: MultiIndex i => i -> V.Vector e -> Tensor i e
-          toTensor i v | V.length v < l = error ("fromVector: length of vector \
-                                                 \must be at least " ++ show l)
-                       | otherwise = Tensor (dimensions i) (V.take l v)
-                       where l = card i
+instance (Bounded i, Cardinality i, MultiIndex i) =>
+    FromVector e (Tensor i e) where
+        fromVector x = toTensor maxBound x
+            where
+              toTensor :: (Cardinality i, MultiIndex i) =>
+                          i -> V.Vector e -> Tensor i e
+              toTensor i v | V.length v < l = error ("fromVector: length of vector \
+                                                     \must be at least " ++ show l)
+                           | otherwise = Tensor (dimensions i) (V.take l v)
+                           where l = card i
 
 
-instance (Bounded i, MultiIndex i) => FromList a (Tensor i a) where
-    fromList = fromVector . V.fromList
+instance (Bounded i, Cardinality i, MultiIndex i) =>
+    FromList a (Tensor i a) where
+        fromList = fromVector . V.fromList
 
 
 instance (Bounded i, MultiIndex i) => MultiIndexable i e (Tensor i e) where
@@ -58,19 +61,19 @@ instance (Bounded i, MultiIndex i) => MultiIndexable i e (Tensor i e) where
     dims _ = maxBound
 
 
-type ColumnVector n = Tensor (n :|: End)
+type ColumnVector n = Tensor (n :|: Nil)
 
 
 type Vector n = ColumnVector n
 
 
-type RowVector n = Tensor (One :|: (n :|: End))
+type RowVector n = Tensor (One :|: (n :|: Nil))
 
 
-type Matrix m n = Tensor (m :|: (n :|: End))
+type Matrix m n = Tensor (m :|: (n :|: Nil))
 
 
-instance (HNat2Integral n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
+instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
     => DirectSummable n (Tensor i e) (Tensor j e) e where
         type DirectSum n (Tensor i e) (Tensor j e) = (Tensor (Concat n i j) e)
         cat n (Tensor d x) (Tensor d' y) = Tensor ((take i d) ++ e'') (V.generate l g)
@@ -84,11 +87,11 @@ instance (HNat2Integral n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
                   g k = if rem k m'' < m
                         then x V.! ((quot k m'')*m + (rem k m''))
                         else y V.! ((quot k m'')*m' + (rem k m'') - m)
-                  i = hNat2Integral n
+                  i = fromCardinal n
 
 
 instance (Ordinal i, Ordinal j) =>
-    Transpose (Tensor (i :|: (j :|: End)) a) (Tensor (j :|: (i :|: End)) a)
+    Transpose (Tensor (i :|: (j :|: Nil)) a) (Tensor (j :|: (i :|: Nil)) a)
         where
           transpose (Tensor [d1,d2] x) = Tensor [d2,d1] (V.generate (d1*d2) t)
               where t n = let (q,r) = quotRem n d1

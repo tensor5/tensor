@@ -1,4 +1,4 @@
-module Data.MultiIndex.Internal where
+module Data.TypeList.MultiIndex.Internal where
 
 -- | Transform the position indicated by an index array inside an
 -- array of given dimensions into the position inside a linear array,

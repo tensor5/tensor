@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | In this module we provide a way to canonically define a totally
@@ -18,9 +18,25 @@
 -- 'Succ' 'One'@} = {1,2,3}
 --
 -- ...
-module Data.Ordinal where
+module Data.Ordinal
+    ( One(..)
+    , Succ(..)
 
-import Data.Ord
+    , Two
+    , Three
+    , Four
+    , Five
+
+    , Ordinal(..)
+
+    , module Data.TypeAlgebra
+
+    ) where
+
+import           Data.Cardinal hiding (Succ)
+import qualified Data.Cardinal as C
+import           Data.Ord
+import           Data.TypeAlgebra
 
 -- | A set with one element.
 data One = One
@@ -51,7 +67,7 @@ instance Enum One where
     enumFromThenTo _ _ _ = [One]
 
 instance Show One where
-    show _ = "1"
+    show One = "1"
 
 -- | If @n@ is a set with n elements, @'Succ' n@ is a set with n+1 elements.
 data Succ n = First -- ^ The first element of the type.
@@ -105,73 +121,66 @@ instance Monad Succ where
     (Succ x) >>= f = f x
     return x = Succ x
 
-
+{-
 class Cardinal n where
     -- | Number of elements inside the type @n@. In any instance of
     -- @'Cardinal'@ the method @'card'@ should be independent on the
     -- argument and work on @'undefined'@.
     card :: (Num i) => n -> i
+-}
+instance Cardinality One where
+    type Card One = C.Succ Zero
 
-instance Cardinal One where
-    card _ = 1
-
-instance (Cardinal a) => Cardinal (Succ a)  where
-    card x = 1 + card (p x)
-             where p :: Succ n -> n
-                   p _ = undefined
+instance Cardinality n => Cardinality (Succ n) where
+    type Card (Succ n) = C.Succ (Card n)
 
 
 -- | Class of ordered sets with n elements. The methods in this class
 -- provide a convenient way to convert to and from a numeric type.
-class (Cardinal n, Ord n) => Ordinal n where
+class (Cardinality n, Ord n) => Ordinal n where
     fromOrdinal :: (Num i) => n -> i
     toOrdinal :: (Num i) => i -> n
 
-
--- | Sum of types.
-class Sum a b where
-    type Plus a b
-    -- | The sum of an element of @a@ and an element of @b@ is an
-    -- element in the type @'Plus' a b@.
-    (<+>) :: a -> b -> Plus a b
-
-instance Sum m One where
-    type Plus m One = Succ m
+instance (Ordinal m) => Sum m One where
+    type m :+: One = Succ m
     x <+> One = Succ x
 
-instance (Ordinal m, Sum m n, Ordinal (Plus m n)) => Sum m (Succ n) where
-    type Plus m (Succ n) = Succ (Plus m n)
-    x <+> First = toOrdinal (1 + fromOrdinal x :: Integer)
-    x <+> (Succ y) = Succ (x <+> y)
+instance (Ordinal m, Ordinal n, Ordinal (m :+: n), Sum m n) =>
+    Sum m (Succ n) where
+        type m :+: (Succ n) = Succ (m :+: n)
+        x <+> First = toOrdinal (1 + fromOrdinal x :: Integer)
+        x <+> (Succ y) = Succ (x <+> y)
 
-
--- | Product of types.
-class Prod a b where
-    type Times a b
-    -- | The product of an element of @a@ and an element of @b@ is an
-    -- element in the type @'Times' a b@.
-    (<*>) :: a -> b -> Times a b
 
 instance (Ordinal m) => Prod m One where
-    type Times m One = m
+    type m :*: One = m
     x <*> One = toOrdinal (fromOrdinal x :: Integer)
 
-instance (Ordinal m, Prod m n, Sum m (Times m n), Ordinal (Plus m (Times m n)))
+instance (Ordinal m, Ordinal n, Prod m n, Sum m (m :*: n), Ordinal (m :+: (m :*: n)))
     => Prod m (Succ n) where
-        type Times m (Succ n) = Plus m (Times m n)
+        type m :*: (Succ n) = m :+: (m :*: n)
         x <*> First = toOrdinal (fromOrdinal x :: Integer)
         x <*> (Succ y) = x <+> (x <*> y)
 
-
--- | The type @a@ is @'Next'@ to @b@ if @a@ can be canonically
--- embedded into @b@.
-class Next a b | a -> b where
-    embed :: a -> b
-
-instance Next One (Succ One) where
+{-
+instance SubSet One (Succ One) where
     embed One = First
 
-instance (Next n (Succ n)) => Next (Succ n) (Succ (Succ n)) where
+instance SubSet n (Succ n) => SubSet (Succ n)  (Succ (Succ n)) where
     embed First = First
     embed (Succ x) = Succ (embed x)
+-}
 
+--instance Ordinal n => SubSet n n where
+--    embed x = toOrdinal (fromOrdinal x :: Integer)
+{-
+instance (SubSet m n, SubSet n (Succ n)) => SubSet m (Succ n) where
+    embed x = let (a,b) = p undefined in
+              asTypeOf (embed (asTypeOf (embed x) a)) b
+        where p :: n -> (n, Succ n)
+              p n = (n, Succ n)
+-}
+instance (Ordinal m, Ordinal n, SubSet m n) => SubSet m (Succ n) where
+    embed x = toOrdinal (fromOrdinal x :: Integer)
+
+instance Ordinal a => LEq a (Succ a)

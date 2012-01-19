@@ -5,8 +5,7 @@
 
 module Data.Tensor where
 
-import           Data.MultiIndex
-import           Data.Ordinal
+import           Data.TypeList.MultiIndex
 
 
 class FromList e t | t -> e where

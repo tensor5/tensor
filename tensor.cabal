@@ -10,14 +10,17 @@ Category:       Data
 Build-Type:     Simple
 
 Library
-  Build-Depends:   base == 4.*, HList, vector
+  Build-Depends:   base == 4.*, vector
   ghc-options:     -Wall -O2
-  Exposed-Modules: Data.Ordinal
+  Exposed-Modules: Data.Cardinal
+                   Data.Ordinal
                    Data.Tensor.LinearAlgebra
-                   Data.MultiIndex
+                   Data.TypeAlgebra
+                   Data.TypeList
+                   Data.TypeList.MultiIndex
                    Data.Tensor
                    Data.Tensor.Vector
   Other-modules: Data.Tensor.LinearAlgebra.Common
                  Data.Tensor.LinearAlgebra.Vector
-                 Data.MultiIndex.Internal
                  Data.Tensor.Vector.Internal
+                 Data.TypeList.MultiIndex.Internal
