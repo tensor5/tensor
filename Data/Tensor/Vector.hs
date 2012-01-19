@@ -3,7 +3,12 @@ module Data.Tensor.Vector
      ColumnVector,
      Vector,
      RowVector,
-     Matrix
+     Matrix,
+
+     module Data.Tensor
+
     ) where
 
+
+import Data.Tensor
 import Data.Tensor.Vector.Internal

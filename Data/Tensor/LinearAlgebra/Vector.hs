@@ -14,8 +14,8 @@ import qualified Data.Cardinal as C
 import           Data.TypeList.MultiIndex hiding (take, drop, length)
 import qualified Data.TypeList.MultiIndex as M
 import           Data.Ordinal
-import           Data.Tensor
 import           Data.Tensor.LinearAlgebra.Common
+import           Data.Tensor.Vector
 import           Data.Tensor.Vector.Internal
 import           Data.TypeAlgebra
 import qualified Data.Vector as V
