@@ -1,11 +1,8 @@
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Data.Tensor where
-
-import           Data.TypeList.MultiIndex
 
 
 class FromList t where
@@ -14,18 +11,46 @@ class FromList t where
 
 -- | In any instance of @'MultiIndexable'@ @'dims'@ should be
 -- independent of its argument and work on @'undefined'@.
-class MultiIndex i => MultiIndexable i e t | t -> e, t -> i where
-    (!) ∷ t -> i -> e
-    dims ∷ t -> i
+class MultiIndexable t where
+    type Index t
+    type Elem t
+    dims ∷ t -> Index t
+    (!) ∷ t -> Index t -> Elem t
 
+{-Alas, GHC 7.0 still cannot handle equality superclasses
+rowSwitch ∷ (Ordinal i, Ordinal j ,MultiIndexable t, (Index t) ~ (i :|: (j :|: Nil)))
+              => i -> i -> t -> t
+rowSwitch _ = undefined
 
+rowMult ∷ (Ordinal i, Ordinal j ,MultiIndexable t, (Index t) ~ (i :|: (j :|: Nil)), (Elem t) ~ e, Num e)
+            => i -> e -> t -> t
+rowMult _ = undefined
 
-class DirectSummable n t1 t2 e | t1 → e, t2 → e where
+rowAdd ∷ (Ordinal i, Ordinal j ,MultiIndexable t, (Index t) ~ (i :|: (j :|: Nil)), (Elem t) ~ e, Num e)
+           => i -> e -> i -> t -> t
+rowAdd _ = undefined
+
+colSwitch ∷ (Ordinal i, Ordinal j ,MultiIndexable t, (Index t) ~ (i :|: (j :|: Nil)))
+              => j -> j -> t -> t
+colSwitch _ = undefined
+
+colMult ∷ (Ordinal i, Ordinal j ,MultiIndexable t, (Index t) ~ (i :|: (j :|: Nil)), (Elem t) ~ e, Num e)
+        => j -> e -> t -> t
+colMult _ = undefined
+
+colAdd ∷ (Ordinal i, Ordinal j ,MultiIndexable t, (Index t) ~ (i :|: (j :|: Nil)), (Elem t) ~ e, Num e)
+           => j -> e -> j -> t -> t
+colAdd _ = undefined
+-}
+
+class DirectSummable n t1 t2 where
     type DirectSum n t1 t2
     cat ∷ n → t1 → t2 → DirectSum n t1 t2
 
 
-class Transpose t1 t2 | t1 -> t2 where
-    transpose ∷ t1 -> t2
+class Transpose t where
+    type TransposeSpace t
+    transpose ∷ t -> TransposeSpace t
+
 
 

@@ -12,7 +12,6 @@ module Data.Tensor.LinearAlgebra.Vector where
 import           Data.Cardinal hiding (Succ)
 import qualified Data.Cardinal as C
 import           Data.TypeList.MultiIndex hiding (take, drop, length)
-import qualified Data.TypeList.MultiIndex as M
 import           Data.Ordinal
 import           Data.Tensor.LinearAlgebra.Common
 import           Data.Tensor.Vector
@@ -32,7 +31,7 @@ instance (Bounded i, Cardinality i, MultiIndex i) =>
 
 
 instance (Num e, Cardinal n, MultiIndex i, MultiIndex j, JoinList n i j) =>
-    Product e n (Tensor i e) (Tensor j e) where
+    Product n (Tensor i e) (Tensor j e) where
         type ProdSpace n (Tensor i e) (Tensor j e) = Tensor (Join n i j) e
         prod n (Tensor d1 x) (Tensor d2 y) =
             Tensor d (V.generate l genP)
@@ -61,12 +60,12 @@ instance (Num a, MultiIndex j, DropAt j k i, TakeUntil j m l, HAppend i l n) =>
                           ++ (drop (length (dimensions i::[Int])) d2)
 -}
 
-instance (Product e (C.Succ Zero) t1 t2) => MatrixProduct e t1 t2 where
+instance (Product (C.Succ Zero) t1 t2) => MatrixProduct t1 t2 where
     type MatrixProductSpace t1 t2 = ProdSpace (C.Succ Zero) t1 t2
     x .*. y = prod (undefined :: C1) x y
 
 
-instance (Num e, Product e C0 t1 t2) => TensorProduct e t1 t2 where
+instance (Product C0 t1 t2) => TensorProduct t1 t2 where
     type t1 :⊗: t2 = ProdSpace C0 t1 t2
     (⊗) = prod (undefined :: C0)
 

@@ -17,17 +17,17 @@ class VectorSpace v where
 --    dimension ∷ v -> Integer
 
 
-class (Cardinal n) => Product e n t1 t2 | t1 -> e, t2 -> e, t1 t2 -> e where
+class (Cardinal n) => Product n t1 t2 where
     type ProdSpace n t1 t2
     prod ∷ n -> t1 -> t2 -> ProdSpace n t1 t2
 
 
-class MatrixProduct e t1 t2 | t1 -> e, t2 -> e where
+class MatrixProduct t1 t2 where
     type MatrixProductSpace t1 t2
     (.*.) ∷ t1 -> t2 -> MatrixProductSpace t1 t2
 
 
-class TensorProduct e t1 t2 | t1 -> e, t2 -> e where
+class TensorProduct t1 t2 where
     type t1 :⊗: t2
     (⊗) ∷ t1 -> t2 -> t1 :⊗: t2
 

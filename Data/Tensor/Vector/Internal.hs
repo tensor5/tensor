@@ -56,9 +56,11 @@ instance (Bounded i, Cardinality i, MultiIndex i) =>
         fromList = fromVector . V.fromList
 
 
-instance (Bounded i, MultiIndex i) => MultiIndexable i e (Tensor i e) where
-    (Tensor _ x) ! j = x V.! multiIndex2Linear j
+instance (Bounded i, MultiIndex i) => MultiIndexable (Tensor i e) where
+    type Index (Tensor i e) = i
+    type Elem (Tensor i e) = e
     dims _ = maxBound
+    (Tensor _ x) ! j = x V.! multiIndex2Linear j
 
 
 type ColumnVector n = Tensor (n :|: Nil)
@@ -74,7 +76,7 @@ type Matrix m n = Tensor (m :|: (n :|: Nil))
 
 
 instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
-    => DirectSummable n (Tensor i e) (Tensor j e) e where
+    => DirectSummable n (Tensor i e) (Tensor j e) where
         type DirectSum n (Tensor i e) (Tensor j e) = (Tensor (Concat n i j) e)
         cat n (Tensor d x) (Tensor d' y) = Tensor ((take i d) ++ e'') (V.generate l g)
             where l = foldl1 (*) ((take i d) ++ e'')
@@ -90,12 +92,12 @@ instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
                   i = fromCardinal n
 
 
-instance (Ordinal i, Ordinal j) =>
-    Transpose (Tensor (i :|: (j :|: Nil)) a) (Tensor (j :|: (i :|: Nil)) a)
-        where
-          transpose (Tensor [d1,d2] x) = Tensor [d2,d1] (V.generate (d1*d2) t)
-              where t n = let (q,r) = quotRem n d1
-                          in x V.! (r * d2 + q)
+instance (Ordinal i, Ordinal j) => Transpose (Tensor (i :|: (j :|: Nil)) e)
+    where
+      type TransposeSpace (Tensor (i :|: (j :|: Nil)) e) = (Tensor (j :|: (i :|: Nil)) e)
+      transpose (Tensor [d1,d2] x) = Tensor [d2,d1] (V.generate (d1*d2) t)
+          where t n = let (q,r) = quotRem n d1
+                      in x V.! (r * d2 + q)
 
 
 getMatrixEntryOnVec :: Int -- ^ Number of rows
