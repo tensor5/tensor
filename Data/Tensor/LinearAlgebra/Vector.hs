@@ -15,7 +15,6 @@ import           Data.Ordinal
 import           Data.Tensor.LinearAlgebra.Common
 import           Data.Tensor.Vector
 import           Data.Tensor.Vector.Internal
-import           Data.TypeAlgebra
 import qualified Data.Vector as V
 import           Prelude hiding (zipWith)
 
@@ -38,7 +37,7 @@ instance (Num e, Cardinal n, MultiIndex i, MultiIndex j, JoinList n i j) =>
                 where lj = product (take (fromCardinal n) d2)
                       ll = V.length y `div` lj
                       l = (V.length x `div` lj) * ll
-                      genP n = mult ((n `div` ll) * lj) (n `mod` ll) 1 0
+                      genP m = mult ((m `div` ll) * lj) (m `mod` ll) 1 0
                       mult u v t acc | t <= lj = mult (u + 1) (v + ll) (t + 1)
                                                  ((x V.! u)*(y V.! v) + acc)
                                      | otherwise = acc
@@ -271,7 +270,7 @@ instance (Fractional e, Ordinal i, Ordinal j) =>
 
 instance (Fractional e, Ordinal i, Ordinal j, Ordinal k) =>
     LinearSystem e i j (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e) where
-        solveLinSystem (Tensor [d1,d2] v) (Tensor [d1',d3] w)
+        solveLinSystem (Tensor [d1,d2] v) (Tensor [_,d3] w)
             = split $ rowEchelonOnVec d1 d2 d3 (cat v w)
               where cat x y  = V.generate (d1*(d2+d3)) gen
                         where gen n | rem n (d2+d3) < d2
@@ -292,7 +291,7 @@ rowEchelonOnVec ∷ (Fractional a)
                     -> Int -- ^ Number of columns of the second matrix
                     -> V.Vector a -- ^ Input Vector
                     -> V.Vector a -- ^ Output Vector
-rowEchelonOnVec d e1 e2 x = re 1 1 2 x
+rowEchelonOnVec d e1 e2 v = re 1 1 2 v
     where re i j i' x | i > d || j > e1 = x
                       | x V.! (coor i j) == 0 =
                           if i' <= d
