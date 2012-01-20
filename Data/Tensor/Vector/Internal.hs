@@ -106,6 +106,28 @@ instance (Ordinal i, Ordinal j) => Transpose (Tensor (i :|: (j :|: Nil)) e)
                       in x V.! (r * d2 + q)
 
 
+unsafeTensorGet :: [Int] -> Tensor i e -> e
+unsafeTensorGet is (Tensor ds x) = x V.! linearize ds is
+
+unsafeTensorGen :: [Int] -> ([Int] -> e) -> Tensor i e
+unsafeTensorGen ds f =
+    Tensor ds $ V.generate (product ds) (f . (unlinearize ds))
+
+unsafeVectorGet :: Int -> Vector i e -> e
+unsafeVectorGet i (Tensor _ x) = x V.! i
+
+unsafeVectorGen :: Int -> (Int -> e) -> Vector i e
+unsafeVectorGen d f = Tensor [d] $ V.generate d f
+
+unsafeMatrixGet :: Int -> Int -> Matrix i j e -> e
+unsafeMatrixGet i j (Tensor ds x) = x V.! linearize ds [i,j]
+
+unsafeMatrixGen :: Int -> Int -> (Int -> Int -> e) -> Matrix i j e
+unsafeMatrixGen d e f = Tensor [d,e] $ V.generate (d*e)
+                        (\n -> let [i,j] = unlinearize [d,e] n in
+                               f i j
+                        )
+
 getMatrixEntryOnVec :: Int -- ^ Number of rows
                     -> Int -- ^ Number of columns
                     -> Int
