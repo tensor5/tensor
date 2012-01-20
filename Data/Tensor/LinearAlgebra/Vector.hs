@@ -240,7 +240,7 @@ colSubOnVec j1 a j2 d e x = V.generate (d*e) ca
           off = j2 - j1
 
 
-instance (Fractional e, Bounded i, Ordinal i) =>  SquareMatrix e i (Tensor (i :|: (i :|: Nil)) e) where
+instance (Fractional e, Bounded i, Ordinal i, Sum i i) =>  SquareMatrix e i (Tensor (i :|: (i :|: Nil)) e) where
     unit = u
            where u = Tensor d $ V.generate (i*i) g
                  g n = if rem n (i + 1) == 0
@@ -268,18 +268,14 @@ instance (Fractional e, Ordinal i, Ordinal j) =>
             = Tensor [d1,d2] (rowEchelonOnVec d1 d2 0 v)
 
 
-instance (Fractional e, Ordinal i, Ordinal j, Ordinal k) =>
+instance (Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
     LinearSystem e i j (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e) where
-        solveLinSystem (Tensor [d1,d2] v) (Tensor [_,d3] w)
-            = split $ rowEchelonOnVec d1 d2 d3 (cat v w)
-              where cat x y  = V.generate (d1*(d2+d3)) gen
-                        where gen n | rem n (d2+d3) < d2
-                                        = x V.! ((quot n (d2+d3))*d2 +
-                                                 (rem n (d2+d3)))
-                                    | otherwise
-                                        = y V.! ((quot n (d2+d3))*d3 +
-                                                 (rem n (d2+d3)) - d2)
-                    split z = (Tensor [d1,d2] (V.generate (d1*d2) a), Tensor [d1,d3] (V.generate (d1*d3) b))
+        solveLinSystem m1 m2
+            = let (Tensor [d1,_] x) = cat (undefined :: C1) m1 m2
+                  (Tensor [_,d2] _) = m1
+                  (Tensor [_,d3] _) = m2 in
+              split d1 d2 d3 $ rowEchelonOnVec d1 d2 d3 x
+              where split d1 d2 d3 z = (Tensor [d1,d2] (V.generate (d1*d2) a), Tensor [d1,d3] (V.generate (d1*d3) b))
                         where a n = z V.! ((quot n d2)*(d2+d3) + (rem n d2))
                               b n = z V.! ((quot n d3)*(d2+d3) + (rem n d3) + d2)
 
