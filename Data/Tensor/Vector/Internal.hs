@@ -18,6 +18,19 @@ import           Text.Show
 data Tensor i e = Tensor [Int] (V.Vector e)
                   deriving Eq
 
+
+type ColumnVector n = Tensor (n :|: Nil)
+
+
+type Vector n = ColumnVector n
+
+
+type RowVector n = Tensor (One :|: (n :|: Nil))
+
+
+type Matrix m n = Tensor (m :|: (n :|: Nil))
+
+
 instance Show e => Show (Tensor i e) where
     showsPrec _ = showsT
         where
@@ -66,18 +79,6 @@ instance (Bounded i, MultiIndex i) => MultiIndexable (Tensor i e) where
     type Elem (Tensor i e) = e
     dims _ = maxBound
     (Tensor _ x) ! j = x V.! multiIndex2Linear j
-
-
-type ColumnVector n = Tensor (n :|: Nil)
-
-
-type Vector n = ColumnVector n
-
-
-type RowVector n = Tensor (One :|: (n :|: Nil))
-
-
-type Matrix m n = Tensor (m :|: (n :|: Nil))
 
 
 instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
