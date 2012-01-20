@@ -5,6 +5,8 @@ module Data.Tensor.Vector
      RowVector,
      Matrix,
 
+     FromVector(..),
+
      module Data.Tensor
 
     ) where
