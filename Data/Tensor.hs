@@ -53,4 +53,6 @@ class Transpose t where
     transpose ∷ t -> TransposeSpace t
 
 
+class Zip t where
+    zipWith :: (a -> b -> c) -> t a -> t b -> t c
 

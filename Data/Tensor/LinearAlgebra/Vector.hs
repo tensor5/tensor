@@ -18,6 +18,7 @@ import           Data.Tensor.Vector
 import           Data.Tensor.Vector.Internal
 import           Data.TypeAlgebra
 import qualified Data.Vector as V
+import           Prelude hiding (zipWith)
 
 instance (Bounded i, Cardinality i, MultiIndex i) =>
     VectorSpace (Tensor i) where
@@ -25,8 +26,8 @@ instance (Bounded i, Cardinality i, MultiIndex i) =>
             where z = Tensor d $ V.replicate l 0
                   l = card $ dims (asTypeOf undefined z)
                   d = dimensions $ dims (asTypeOf undefined z)
-        a *. (Tensor d v) = Tensor d (V.map  (* a) v)
-        (Tensor d x) .+. (Tensor _ y) = Tensor d (V.zipWith (+) x y)
+        a *. t = fmap (* a) t
+        (.+.) = zipWith (+)
 --    dimension _ = dim (undefined :: i)
 
 

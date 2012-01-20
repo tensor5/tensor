@@ -35,6 +35,11 @@ instance Functor (Tensor i) where
     fmap f (Tensor is v) = Tensor is (fmap f v)
 
 
+instance Zip (Tensor i) where
+    zipWith f (Tensor d x) (Tensor _ y) = Tensor d $ V.zipWith f x y
+
+
+
 class FromVector t where
     fromVector :: V.Vector e -> t e
 
