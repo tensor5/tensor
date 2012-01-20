@@ -45,21 +45,7 @@ instance (Num e, Cardinal n, MultiIndex i, MultiIndex j, JoinList n i j) =>
                                      | otherwise = acc
                       d = (take (length d1 - fromCardinal n) d1) ++
                           (drop (fromCardinal n) d2)
-{-
-instance (Num a, MultiIndex j, DropAt j k i, TakeUntil j m l, HAppend i l n) =>
-    Product a j (Tensor k a) (Tensor m a) (Tensor n a) where
-        prod i (Tensor d1 x) (Tensor d2 y) =
-            Tensor d (V.generate l genP)
-                where lj = card i
-                      ll = V.length y `div` lj
-                      l = (V.length x `div` lj) * ll
-                      genP n = mult ((n `div` ll) * lj) (n `mod` ll) 1 0
-                      mult u v t acc | t <= lj = mult (u + 1) (v + ll) (t + 1)
-                                                 ((x V.! u)*(y V.! v) + acc)
-                                     | otherwise = acc
-                      d = (take (length d1 - length (dimensions i::[Int])) d1)
-                          ++ (drop (length (dimensions i::[Int])) d2)
--}
+
 
 instance (Product (C.Succ Zero) t1 t2) => MatrixProduct t1 t2 where
     type MatrixProductSpace t1 t2 = ProdSpace (C.Succ Zero) t1 t2
@@ -70,26 +56,13 @@ instance (Product C0 t1 t2) => TensorProduct t1 t2 where
     type t1 :⊗: t2 = ProdSpace C0 t1 t2
     (⊗) = prod (undefined :: C0)
 
-{-
-instance (Num e, TypeList i, Cardinal (Length i), MultiIndexable i e t, Product e (Length i) t t, MultiIndexable Nil e (ProdSpace (Length i) t t)) =>
-    DotProduct e t where
-        dot x y = (prod (TL.length $ dims x) x y) ! Nil
--}
 
 instance DotProduct (Tensor i) where
     dot (Tensor _ x) (Tensor _ y) = V.sum $ V.zipWith (*) x y
 
-{-
-instance (Num e, TypeList i, Cardinal (Length i), MultiIndexable i e t1, MultiIndexable i e t2, Product e (Length i) t1 t2, MultiIndexable Nil e (ProdSpace (Length i) t1 t2)) => DotProduct e t1 t2 where
-    dot x y = (prod (TL.length $ dims x) x y) ! Nil
--}
-{-
-instance (TypeList i, MultiIndexable i a t1, MultiIndexable i a t2, Product a (Length i) t1 t2) =>
-    DotProduct a t1 t2 where
-        dot x y = prod (dims x) x y
--}
 
 instance (Num e, Ordinal i, Ordinal j) => RMatrix e i j (Tensor (i :|: (j :|: Nil)) e) where
+--instance RMatrix Matrix where
     rowSwitch i1 i2 (Tensor [d1,d2] v) | i1 /= i2 =
                                            Tensor [d1,d2] (rowSwitchOnVec
                                                            (fromOrdinal i1)
