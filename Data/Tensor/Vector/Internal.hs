@@ -102,9 +102,11 @@ instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
 instance (Ordinal i, Ordinal j) => Transpose (Tensor (i :|: (j :|: Nil)) e)
     where
       type TransposeSpace (Tensor (i :|: (j :|: Nil)) e) = (Tensor (j :|: (i :|: Nil)) e)
-      transpose (Tensor [d1,d2] x) = Tensor [d2,d1] (V.generate (d1*d2) t)
+      transpose (Tensor ds x) = Tensor [d2,d1] (V.generate (d1*d2) t)
           where t n = let (q,r) = quotRem n d1
                       in x V.! (r * d2 + q)
+                d1 = head ds
+                d2 = head $ tail ds
 
 
 unsafeTensorGet :: [Int] -> Tensor i e -> e

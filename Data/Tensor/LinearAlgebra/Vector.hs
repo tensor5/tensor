@@ -61,44 +61,52 @@ instance DotProduct (Tensor i) where
 
 instance (Num e, Ordinal i, Ordinal j) => RMatrix e i j (Tensor (i :|: (j :|: Nil)) e) where
 --instance RMatrix Matrix where
-    rowSwitch i1 i2 (Tensor [d1,d2] v) | i1 /= i2 =
-                                           Tensor [d1,d2] (rowSwitchOnVec
-                                                           (fromOrdinal i1)
-                                                           (fromOrdinal i2)
-                                                           d1
-                                                           d2
-                                                           v
-                                                          )
-                                       | otherwise = Tensor [d1,d2] v
-    colSwitch j1 j2 (Tensor [d1,d2] v) | j1 /= j2 =
-                                           Tensor [d1,d2] (colSwitchOnVec
-                                                           (fromOrdinal j1)
-                                                           (fromOrdinal j2)
-                                                           d1
-                                                           d2
-                                                           v
-                                                          )
-                                       | otherwise = Tensor [d1,d2] v
-    rowMult i a (Tensor [d1,d2] v) = Tensor [d1,d2]
-                                     (rowMultOnVec (fromOrdinal i) a d1 d2 v)
-    colMult j a (Tensor [d1,d2] v) = Tensor [d1,d2]
-                                     (colMultOnVec (fromOrdinal j) a d1 d2 v)
-    rowAdd i1 a i2 (Tensor [d1,d2] v) = Tensor [d1,d2] (rowAddOnVec
-                                                        (fromOrdinal i1)
-                                                        a
-                                                        (fromOrdinal i2)
-                                                        d1
-                                                        d2
-                                                        v
-                                                       )
-    colAdd j1 a j2 (Tensor [d1,d2] v) = Tensor [d1,d2] (colAddOnVec
-                                                        (fromOrdinal j1)
-                                                        a
-                                                        (fromOrdinal j2)
-                                                        d1
-                                                        d2
-                                                        v
-                                                       )
+    rowSwitch i1 i2 (Tensor ds v) | i1 /= i2 = Tensor ds (rowSwitchOnVec
+                                                          (fromOrdinal i1)
+                                                          (fromOrdinal i2)
+                                                          (head ds)
+                                                          (head $ tail ds)
+                                                          v
+                                                         )
+                                  | otherwise = Tensor ds v
+    colSwitch j1 j2 (Tensor ds v) | j1 /= j2 = Tensor ds (colSwitchOnVec
+                                                          (fromOrdinal j1)
+                                                          (fromOrdinal j2)
+                                                          (head ds)
+                                                          (head $ tail ds)
+                                                          v
+                                                         )
+                                  | otherwise = Tensor ds v
+    rowMult i a (Tensor ds v) = Tensor ds (rowMultOnVec
+                                           (fromOrdinal i)
+                                           a
+                                           (head ds)
+                                           (head $ tail ds)
+                                           v
+                                          )
+    colMult j a (Tensor ds v) = Tensor ds (colMultOnVec
+                                           (fromOrdinal j)
+                                           a
+                                           (head ds)
+                                           (head $ tail ds)
+                                           v
+                                          )
+    rowAdd i1 a i2 (Tensor ds v) = Tensor ds (rowAddOnVec
+                                              (fromOrdinal i1)
+                                              a
+                                              (fromOrdinal i2)
+                                              (head ds)
+                                              (head $ tail ds)
+                                              v
+                                             )
+    colAdd j1 a j2 (Tensor ds v) = Tensor ds (colAddOnVec
+                                              (fromOrdinal j1)
+                                              a
+                                              (fromOrdinal j2)
+                                              (head ds)
+                                              (head $ tail ds)
+                                              v
+                                             )
 
 
 -- | Row switch on Vector representation of the matrix
@@ -253,19 +261,27 @@ instance (Fractional e, Bounded i, Ordinal i, Sum i i) =>  SquareMatrix e i (Ten
                 then Just s
                 else Nothing
                     where u = asTypeOf unit m
-    tr (Tensor [d,_] x) = traceOnVec d x
-    charPoly (Tensor [d,_] x) | d == 1 = [traceOnVec d x]
-                               | otherwise = go (initClowOnVec d x) 1 1 [traceOnVec d x]
+    tr (Tensor ds x) = traceOnVec (head ds) x
+    charPoly (Tensor ds x) | d == 1 = [traceOnVec d x]
+                           | otherwise = go
+                                         (initClowOnVec d x)
+                                         1
+                                         1
+                                         [traceOnVec d x]
         where go v l s acc | l == d - 1 = (s * endClowOnVec d x v) : acc
-                           | otherwise = go (clowStepOnVec d x v) (l+1) (negate s)
-                                       ((s * endClowOnVec d x v):acc)
+                           | otherwise = go
+                                         (clowStepOnVec d x v)
+                                         (l+1)
+                                         (negate s)
+                                         ((s * endClowOnVec d x v):acc)
+              d = head ds
     det = head . charPoly
 
 
 instance (Fractional e, Ordinal i, Ordinal j) =>
     EchelonForm e i j (Tensor (i :|: (j :|: Nil)) e) where
-        rowEchelonForm (Tensor [d1,d2] v)
-            = Tensor [d1,d2] (rowEchelonOnVec d1 d2 0 v)
+        rowEchelonForm (Tensor ds v)
+            = Tensor ds (rowEchelonOnVec (head ds) (head $ tail ds) 0 v)
 
 
 instance (Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
@@ -320,7 +336,7 @@ clowStepOnVec :: Num a =>
 clowStepOnVec d x y = generateMatrixOnVec d d g
     where g c0 c' | c0 < c' = sum [(b c0 c)*(a c c') | c <- [c0 .. d]]
                   | c0 == c' = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. c'-1], c <- [c'' .. d]]
-                  | c0 > c' = 0
+                  | otherwise = 0
           a i j = getMatrixEntryOnVec d d i j x
           b i j = getMatrixEntryOnVec d d i j y
 
