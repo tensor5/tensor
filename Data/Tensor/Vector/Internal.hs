@@ -80,6 +80,14 @@ instance (Bounded i, MultiIndex i) => T.Tensor (Tensor i e) where
     type Elem (Tensor i e) = e
     dims _ = maxBound
     (Tensor _ x) ! j = x V.! multiIndex2Linear j
+    generate f = t
+        where t = Tensor d $
+                  V.generate (product d) (f . toMultiIndex . (unlinearize d))
+              d = fromMultiIndex $ dims $ asTypeOf undefined t
+    replicate e = t
+        where t = Tensor d $
+                  V.replicate (product d) e
+              d = fromMultiIndex $ dims $ asTypeOf undefined t
 
 
 instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)

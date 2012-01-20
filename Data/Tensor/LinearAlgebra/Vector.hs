@@ -19,14 +19,11 @@ import           Data.Tensor.LinearAlgebra
 import           Data.Tensor.Vector
 import           Data.Tensor.Vector.Internal
 import qualified Data.Vector as V
-import           Prelude hiding (zipWith)
+import           Prelude hiding (replicate, zipWith)
 
 instance (Bounded i, Cardinality i, MultiIndex i) =>
     VectorSpace (Tensor i) where
-        zero = z
-            where z = Tensor d $ V.replicate l 0
-                  l = card $ dims (asTypeOf undefined z)
-                  d = dimensions $ dims (asTypeOf undefined z)
+        zero = replicate 0
         a *. t = fmap (* a) t
         (.+.) = zipWith (+)
 --    dimension _ = dim (undefined :: i)

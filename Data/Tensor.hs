@@ -16,6 +16,9 @@ class Tensor t where
     type Elem t
     dims ∷ t -> Index t
     (!) ∷ t -> Index t -> Elem t
+    generate :: (Index t -> Elem t) -> t
+    replicate :: Elem t -> t
+    replicate e = generate (\_ -> e)
 
 {-Alas, GHC 7.0 still cannot handle equality superclasses
 rowSwitch ∷ (Ordinal i, Ordinal j ,MultiIndexable t, (Index t) ~ (i :|: (j :|: Nil)))
