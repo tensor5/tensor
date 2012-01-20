@@ -6,13 +6,16 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Data.Tensor.LinearAlgebra.Vector where
+module Data.Tensor.LinearAlgebra.Vector
+    (
+     module Data.Tensor.LinearAlgebra
+    ) where
 
 import           Data.Cardinal hiding (Succ)
 import qualified Data.Cardinal as C
 import           Data.TypeList.MultiIndex hiding (take, drop, length)
 import           Data.Ordinal
-import           Data.Tensor.LinearAlgebra.Common
+import           Data.Tensor.LinearAlgebra
 import           Data.Tensor.Vector
 import           Data.Tensor.Vector.Internal
 import qualified Data.Vector as V

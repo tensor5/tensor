@@ -15,12 +15,11 @@ Library
   Exposed-Modules: Data.Cardinal
                    Data.Ordinal
                    Data.Tensor.LinearAlgebra
+                   Data.Tensor.LinearAlgebra.Vector
                    Data.TypeAlgebra
                    Data.TypeList
                    Data.TypeList.MultiIndex
                    Data.Tensor
                    Data.Tensor.Vector
-  Other-modules: Data.Tensor.LinearAlgebra.Common
-                 Data.Tensor.LinearAlgebra.Vector
-                 Data.Tensor.Vector.Internal
+  Other-modules: Data.Tensor.Vector.Internal
                  Data.TypeList.MultiIndex.Internal
