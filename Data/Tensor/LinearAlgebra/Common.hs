@@ -51,9 +51,9 @@ class (Fractional e, Ordinal i, Ordinal j) => EchelonForm e i j t
     rowEchelonForm ∷ t -> t
 
 
-class (Fractional e, Ordinal i, Ordinal j) => LinearSystem e i j t1 t2
-                              | t1 -> e, t1 -> i, t1 -> j, e -> t1, e -> i where
-    solveLinSystem ∷ t1 -> t2 -> (t1,t2)
+class (Fractional e, Ordinal i, Ordinal j) =>
+    LinearSystem e i j t1 t2 | t1 -> e, t1 -> i, t1 -> j, t2 -> e, t2 -> i where
+                             solveLinSystem ∷ t1 -> t2 -> (t1,t2)
 
 
 class (Fractional e, Ordinal i) => SquareMatrix e i t | t -> e, t -> i where
