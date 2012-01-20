@@ -11,7 +11,8 @@ import           Data.Cardinal
 import           Data.TypeList.MultiIndex hiding (drop, take)
 import           Data.TypeList.MultiIndex.Internal
 import           Data.Ordinal
-import           Data.Tensor
+import           Data.Tensor hiding (Tensor)
+import qualified Data.Tensor as T
 import qualified Data.Vector as V
 import           Text.Show
 
@@ -74,7 +75,7 @@ instance (Bounded i, Cardinality i, MultiIndex i) =>
         fromList = fromVector . V.fromList
 
 
-instance (Bounded i, MultiIndex i) => MultiIndexable (Tensor i e) where
+instance (Bounded i, MultiIndex i) => T.Tensor (Tensor i e) where
     type Index (Tensor i e) = i
     type Elem (Tensor i e) = e
     dims _ = maxBound

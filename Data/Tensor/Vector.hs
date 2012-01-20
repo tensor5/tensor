@@ -10,5 +10,5 @@ module Data.Tensor.Vector
     ) where
 
 
-import Data.Tensor
+import Data.Tensor hiding (Tensor)
 import Data.Tensor.Vector.Internal

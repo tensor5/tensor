@@ -9,9 +9,9 @@ class FromList t where
     fromList ∷ [e] -> t e
 
 
--- | In any instance of @'MultiIndexable'@ @'dims'@ should be
+-- | In any instance of @'Tensor'@ @'dims'@ should be
 -- independent of its argument and work on @'undefined'@.
-class MultiIndexable t where
+class Tensor t where
     type Index t
     type Elem t
     dims ∷ t -> Index t
