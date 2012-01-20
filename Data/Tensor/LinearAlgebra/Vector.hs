@@ -240,7 +240,7 @@ colSubOnVec j1 a j2 d e x = V.generate (d*e) ca
           off = j2 - j1
 
 
-instance (Fractional e, Bounded i, Ordinal i, Cardinal (Card i :*: Card i)) =>  SquareMatrix e i (Tensor (i :|: (i :|: Nil)) e) where
+instance (Fractional e, Bounded i, Ordinal i) =>  SquareMatrix e i (Tensor (i :|: (i :|: Nil)) e) where
     unit = u
            where u = Tensor d $ V.generate (i*i) g
                  g n = if rem n (i + 1) == 0
