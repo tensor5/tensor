@@ -141,20 +141,3 @@ unsafeMatrixGen d e f = Tensor [d,e] $ V.generate (d*e)
                                f i j
                         )
 
-getMatrixEntryOnVec :: Int -- ^ Number of rows
-                    -> Int -- ^ Number of columns
-                    -> Int
-                    -> Int
-                    -> V.Vector a
-                    -> a
-getMatrixEntryOnVec d e i j x = x V.! linearize [d,e] [i,j]
-
-generateMatrixOnVec :: Int -- ^ Number of rows
-                    -> Int -- ^ Number of columns
-                    -> (Int -> Int -> a)
-                    -> V.Vector a
-generateMatrixOnVec d e g = V.generate (d*e)
-                            (\n -> let [i,j] = unlinearize [d,e] n in
-                                   g i j
-                            )
-
