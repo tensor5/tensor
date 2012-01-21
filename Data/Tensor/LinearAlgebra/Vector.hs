@@ -16,8 +16,9 @@ import qualified Data.Cardinal as C
 import           Data.TypeList.MultiIndex hiding (take, drop, length)
 import           Data.Ordinal
 import           Data.Tensor.LinearAlgebra
-import           Data.Tensor.Vector
-import           Data.Tensor.Vector.Internal
+import           Data.Tensor.Vector hiding (Matrix)
+import qualified Data.Tensor.Vector as TV
+import           Data.Tensor.Vector.Internal hiding (Matrix)
 import qualified Data.Vector as V
 import           Prelude hiding (replicate, zipWith)
 
@@ -59,8 +60,7 @@ instance DotProduct (Tensor i) where
     dot (Tensor _ x) (Tensor _ y) = V.sum $ V.zipWith (*) x y
 
 
-instance (Num e, Ordinal i, Ordinal j) => RMatrix e i j (Tensor (i :|: (j :|: Nil)) e) where
---instance RMatrix Matrix where
+instance (Num e, Ordinal i, Ordinal j) => Matrix e i j (Tensor (i :|: (j :|: Nil)) e) where
     rowSwitch i1 i2 (Tensor ds v) | i1 /= i2 = Tensor ds (rowSwitchOnVec
                                                           (fromOrdinal i1)
                                                           (fromOrdinal i2)

@@ -36,7 +36,7 @@ class DotProduct t where
     dot ∷ (Num e) => t e -> t e -> e
 
 
-class (Num e, Ordinal i, Ordinal j) => RMatrix e i j t
+class (Num e, Ordinal i, Ordinal j) => Matrix e i j t
                                      | t -> e, t -> i, t -> j where
     rowSwitch ∷ i -> i -> t -> t
     rowMult ∷ i -> e -> t -> t
