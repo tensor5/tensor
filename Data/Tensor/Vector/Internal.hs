@@ -16,8 +16,10 @@ import qualified Data.Tensor as T
 import qualified Data.Vector as V
 import           Text.Show
 
-data Tensor i e = Tensor [Int] (V.Vector e)
-                  deriving Eq
+data Tensor i e = Tensor
+    { form :: [Int]
+    , content :: V.Vector e
+    } deriving Eq
 
 
 type ColumnVector n = Tensor (n :|: Nil)
