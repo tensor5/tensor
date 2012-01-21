@@ -21,9 +21,9 @@ class Tensor t where
     replicate e = generate (\_ -> e)
 
 
-class DirectSummable n t1 t2 where
-    type DirectSum n t1 t2
-    cat ∷ n → t1 → t2 → DirectSum n t1 t2
+class DirectSum n t1 t2 where
+    type SumSpace n t1 t2
+    directSum ∷ n → t1 → t2 → SumSpace n t1 t2
 
 
 class Transpose t where

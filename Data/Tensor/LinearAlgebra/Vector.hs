@@ -287,7 +287,7 @@ instance (Fractional e, Ordinal i, Ordinal j) =>
 instance (Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
     LinearSystem e i j (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e) where
         solveLinSystem m1 m2
-            = let (Tensor [d1,_] x) = cat (undefined :: C1) m1 m2
+            = let (Tensor [d1,_] x) = directSum (undefined :: C1) m1 m2
                   (Tensor [_,d2] _) = m1
                   (Tensor [_,d3] _) = m2 in
               split d1 d2 d3 $ rowEchelonOnVec d1 d2 d3 x
