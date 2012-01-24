@@ -274,7 +274,6 @@ instance (Fractional e, Bounded i, Ordinal i, Sum i i) =>  SquareMatrix e i (Ten
                                          (negate s)
                                          ((s * endClow x v):acc)
               d = head $ form x
-    det = head . charPoly
 
 
 instance (Fractional e, Ordinal i, Ordinal j) =>

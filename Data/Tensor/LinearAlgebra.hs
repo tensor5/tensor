@@ -59,6 +59,7 @@ class (Fractional e, Ordinal i) => SquareMatrix e i t | t -> e, t -> i where
     unit :: t
     inverse :: t -> Maybe t
     tr :: t -> e
+    tr = last . charPoly
     -- | Computes the coefficient of the polynomial p(z)=det(A+zI)
     -- using the method of /closed ordered walks/ (/clow/) illustrated
     -- in the paper of G. Rote
@@ -72,3 +73,4 @@ class (Fractional e, Ordinal i) => SquareMatrix e i t | t -> e, t -> i where
     -- principal minors of order n-k+1.
     charPoly :: t -> [e]
     det :: t -> e
+    det = head . charPoly
