@@ -55,10 +55,10 @@ class (Fractional e, Ordinal i, Ordinal j) =>
                              solveLinSystem :: t1 -> t2 -> (t1,t2)
 
 
-class (Fractional e, Ordinal i) => SquareMatrix e i t | t -> e, t -> i where
-    unit :: t
-    inverse :: t -> Maybe t
-    tr :: t -> e
+class SquareMatrix t where
+    unit :: Num e => t e
+    inverse :: Fractional e => t e -> Maybe (t e)
+    tr :: Num e => t e -> e
     tr = last . charPoly
     -- | Computes the coefficient of the polynomial p(z)=det(A+zI)
     -- using the method of /closed ordered walks/ (/clow/) illustrated
@@ -71,6 +71,6 @@ class (Fractional e, Ordinal i) => SquareMatrix e i t | t -> e, t -> i where
     -- coefficient of z^n equals 1 and is not included in the
     -- resulting list. The k-th coefficient is the sum of all
     -- principal minors of order n-k+1.
-    charPoly :: t -> [e]
-    det :: t -> e
+    charPoly :: Num e => t e -> [e]
+    det :: Num e => t e -> e
     det = head . charPoly
