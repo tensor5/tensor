@@ -4,7 +4,6 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE UnicodeSyntax #-}
 
 module Data.Tensor.LinearAlgebra.Vector
     (
@@ -297,7 +296,7 @@ instance (Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
 
 
 -- | Row echelon form on Vector representation of the matrix
-rowEchelonOnVec ∷ (Fractional a)
+rowEchelonOnVec :: (Fractional a)
                     => Int -- ^ Number of rows
                     -> Int -- ^ Number of columns of the first matrix
                     -> Int -- ^ Number of columns of the second matrix

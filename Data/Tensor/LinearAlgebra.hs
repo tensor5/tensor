@@ -2,7 +2,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UnicodeSyntax #-}
 
 module Data.Tensor.LinearAlgebra where
 
@@ -11,55 +10,55 @@ import Data.Ordinal
 
 
 class VectorSpace v where
-    zero ∷ Num e => v e
-    (*.) ∷ Num e => e -> v e -> v e
-    (.+.) ∷ Num e => v e -> v e -> v e
---    dimension ∷ v -> Integer
+    zero :: Num e => v e
+    (*.) :: Num e => e -> v e -> v e
+    (.+.) :: Num e => v e -> v e -> v e
+--    dimension :: v -> Integer
 
 
 class (Cardinal n) => Product n t1 t2 where
     type ProdSpace n t1 t2
-    prod ∷ n -> t1 -> t2 -> ProdSpace n t1 t2
+    prod :: n -> t1 -> t2 -> ProdSpace n t1 t2
 
 
 class MatrixProduct t1 t2 where
     type MatrixProductSpace t1 t2
-    (.*.) ∷ t1 -> t2 -> MatrixProductSpace t1 t2
+    (.*.) :: t1 -> t2 -> MatrixProductSpace t1 t2
 
 
 class TensorProduct t1 t2 where
     type t1 :⊗: t2
-    (⊗) ∷ t1 -> t2 -> t1 :⊗: t2
+    (⊗) :: t1 -> t2 -> t1 :⊗: t2
 
 
 class DotProduct t where
-    dot ∷ (Num e) => t e -> t e -> e
+    dot :: (Num e) => t e -> t e -> e
 
 
 class (Num e, Ordinal i, Ordinal j) => Matrix e i j t
                                      | t -> e, t -> i, t -> j where
-    rowSwitch ∷ i -> i -> t -> t
-    rowMult ∷ i -> e -> t -> t
-    rowAdd ∷ i -> e -> i -> t -> t
-    colSwitch ∷ j -> j -> t -> t
-    colMult ∷ j -> e -> t -> t
-    colAdd ∷ j -> e -> j -> t -> t
+    rowSwitch :: i -> i -> t -> t
+    rowMult :: i -> e -> t -> t
+    rowAdd :: i -> e -> i -> t -> t
+    colSwitch :: j -> j -> t -> t
+    colMult :: j -> e -> t -> t
+    colAdd :: j -> e -> j -> t -> t
 
 
 class (Fractional e, Ordinal i, Ordinal j) => EchelonForm e i j t
                                             | t -> e, t -> i, t -> j where
-    rowEchelonForm ∷ t -> t
+    rowEchelonForm :: t -> t
 
 
 class (Fractional e, Ordinal i, Ordinal j) =>
     LinearSystem e i j t1 t2 | t1 -> e, t1 -> i, t1 -> j, t2 -> e, t2 -> i where
-                             solveLinSystem ∷ t1 -> t2 -> (t1,t2)
+                             solveLinSystem :: t1 -> t2 -> (t1,t2)
 
 
 class (Fractional e, Ordinal i) => SquareMatrix e i t | t -> e, t -> i where
-    unit ∷ t
-    inverse ∷ t -> Maybe t
-    tr ∷ t -> e
+    unit :: t
+    inverse :: t -> Maybe t
+    tr :: t -> e
     -- | Computes the coefficient of the polynomial p(z)=det(A+zI)
     -- using the method of /closed ordered walks/ (/clow/) illustrated
     -- in the paper of G. Rote
