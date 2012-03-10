@@ -154,3 +154,96 @@ unsafeMatrixGetRow :: Int -> Matrix i j e -> Vector j e
 unsafeMatrixGetRow i (Tensor ds x) = Tensor (tail ds) $
                                      V.slice ((i-1)*d) d x
     where d = last ds
+
+
+unsafeMatrixRowSwitch :: Int -> Int -> Matrix i j e -> Matrix i j e
+unsafeMatrixRowSwitch i1 i2 (Tensor ds x) = Tensor ds $ V.generate (d*e) rs
+    where d = head ds
+          e = last ds
+          rs n | quot n e == i1 - 1 = x V.! (n + off)
+               | quot n e == i2 - 1 = x V.! (n - off)
+               | otherwise = x V.! n
+          off = e * (i2 - i1)
+
+
+unsafeMatrixColSwitch :: Int -> Int -> Matrix i j e -> Matrix i j e
+unsafeMatrixColSwitch j1 j2 (Tensor ds x) = Tensor ds $ V.generate (d*e) cs
+    where d = head ds
+          e = last ds
+          cs n | rem n e == j1 - 1 = x V.! (n + off)
+               | rem n e == j2 - 1 = x V.! (n - off)
+               | otherwise = x V.! n
+          off =  j2 - j1
+
+
+unsafeMatrixRowMult :: (Num e) => Int -> e -> Matrix i j e -> Matrix i j e
+unsafeMatrixRowMult i a (Tensor ds x) = Tensor ds $ V.generate (d*e) rm
+    where d = head ds
+          e = last ds
+          rm n = if quot n e == i - 1
+                 then (x V.! n) * a
+                 else x V.! n
+
+
+unsafeMatrixColMult :: (Num e) => Int -> e -> Matrix i j e -> Matrix i j e
+unsafeMatrixColMult j a (Tensor ds x) = Tensor ds $ V.generate (d*e) cm
+    where d = head ds
+          e = last ds
+          cm n = if rem n e == j - 1
+                 then (x V.! n) * a
+                 else x V.! n
+
+
+unsafeMatrixRowDiv :: (Fractional e) => Int -> e -> Matrix i j e -> Matrix i j e
+unsafeMatrixRowDiv i a (Tensor ds x) = Tensor ds $ V.generate (d*e) rd
+    where d = head ds
+          e = last ds
+          rd n = if quot n e == i - 1
+                 then (x V.! n) / a
+                 else x V.! n
+
+
+unsafeMatrixColDiv :: (Fractional e) => Int -> e -> Matrix i j e -> Matrix i j e
+unsafeMatrixColDiv j a (Tensor ds x) = Tensor ds $ V.generate (d*e) cd
+    where d = head ds
+          e = last ds
+          cd n = if rem n e == j - 1
+                 then (x V.! n) / a
+                 else x V.! n
+
+
+unsafeMatrixRowAdd :: (Num e) => Int -> e -> Int -> Matrix i j e -> Matrix i j e
+unsafeMatrixRowAdd i1 a i2 (Tensor ds x) = Tensor ds $ V.generate (d*e) ra
+    where d = head ds
+          e = last ds
+          ra n | quot n e == i1 - 1 = x V.! n + (x V.! (n + off))*a
+               | otherwise = x V.! n
+          off = e * (i2 - i1)
+
+
+unsafeMatrixColAdd :: (Num e) => Int -> e -> Int -> Matrix i j e -> Matrix i j e
+unsafeMatrixColAdd j1 a j2 (Tensor ds x) = Tensor ds $ V.generate (d*e) ca
+    where d = head ds
+          e = last ds
+          ca n | rem n e == j1 - 1 = x V.! n + (x V.! (n + off))*a
+               | otherwise = x V.! n
+          off = j2 - j1
+
+
+unsafeMatrixRowSub :: (Num e) => Int -> e -> Int -> Matrix i j e -> Matrix i j e
+unsafeMatrixRowSub i1 a i2 (Tensor ds x) = Tensor ds $ V.generate (d*e) rs
+    where d = head ds
+          e = last ds
+          rs n | quot n e == i1 - 1 = x V.! n - (x V.! (n + off))*a
+               | otherwise = x V.! n
+          off = e * (i2 - i1)
+
+
+unsafeMatrixColSub :: (Num e) => Int -> e -> Int -> Matrix i j e -> Matrix i j e
+unsafeMatrixColSub j1 a j2 (Tensor ds x) = Tensor ds $ V.generate (d*e) cs
+    where d = head ds
+          e = last ds
+          cs n | rem n e == j1 - 1 = x V.! n - (x V.! (n + off))*a
+               | otherwise = x V.! n
+          off = j2 - j1
+
