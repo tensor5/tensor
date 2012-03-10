@@ -110,7 +110,7 @@ instance (Num e, Ordinal i, Ordinal j) => LA.Matrix e i j (Tensor (i :|: (j :|: 
 
 
 -- | Row switch on Vector representation of the matrix
-rowSwitchOnVec :: Int -- ^ First row to switsh
+rowSwitchOnVec :: Int -- ^ First row to switch
                -> Int -- ^ Second row to switch
                -> Int -- ^ Number of rows
                -> Int -- ^ Number of columns
