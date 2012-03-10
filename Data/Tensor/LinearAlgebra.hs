@@ -50,9 +50,10 @@ class (Fractional e, Ordinal i, Ordinal j) => EchelonForm e i j t
     rowEchelonForm :: t -> t
 
 
-class (Fractional e, Ordinal i, Ordinal j) =>
-    LinearSystem e i j t1 t2 | t1 -> e, t1 -> i, t1 -> j, t2 -> e, t2 -> i where
-                             solveLinSystem :: t1 -> t2 -> (t1,t2)
+class LinearSystem t1 t2 where
+    type SolSpace t1 t2
+    triangularSolve :: t1 -> t2 -> (t1,t2)
+    parametricSolve :: t1 -> t2 -> Maybe (SolSpace t1 t2,[SolSpace t1 t2])
 
 
 class SquareMatrix t where

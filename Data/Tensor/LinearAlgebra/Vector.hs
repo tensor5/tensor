@@ -256,7 +256,7 @@ instance (Bounded i, Ordinal i, Sum i i) =>  SquareMatrix (Tensor (i :|: (i :|: 
                        else 0
                  i = head d
                  d = dimensions $ dims (asTypeOf undefined u)
-    inverse m = let (f,s) = solveLinSystem m u in
+    inverse m = let (f,s) = triangularSolve m u in
                 if f == u
                 then Just s
                 else Nothing
@@ -283,16 +283,58 @@ instance (Eq e, Fractional e, Ordinal i, Ordinal j) =>
             = Tensor ds (rowEchelonOnVec (head ds) (head $ tail ds) 0 v)
 
 
-instance (Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
-    LinearSystem e i j (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e) where
-        solveLinSystem m1 m2
-            = let (Tensor [d1,_] x) = directSum (undefined :: C1) m1 m2
-                  (Tensor [_,d2] _) = m1
-                  (Tensor [_,d3] _) = m2 in
-              split d1 d2 d3 $ rowEchelonOnVec d1 d2 d3 x
-              where split d1 d2 d3 z = (Tensor [d1,d2] (V.generate (d1*d2) a), Tensor [d1,d3] (V.generate (d1*d3) b))
-                        where a n = z V.! ((quot n d2)*(d2+d3) + (rem n d2))
-                              b n = z V.! ((quot n d3)*(d2+d3) + (rem n d3) + d2)
+instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
+    LinearSystem (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e)
+        where
+          type SolSpace (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e) = (Tensor (j :|: (k :|: Nil)) e)
+          triangularSolve m1 m2
+              = let (Tensor [d1,_] x) = directSum (undefined :: C1) m1 m2
+                    (Tensor [_,d2] _) = m1
+                    (Tensor [_,d3] _) = m2 in
+                split d1 d2 d3 $ rowEchelonOnVec d1 d2 d3 x
+                    where split d1 d2 d3 z = (Tensor [d1,d2] (V.generate (d1*d2) a), Tensor [d1,d3] (V.generate (d1*d3) b))
+                              where a n = z V.! ((quot n d2)*(d2+d3) + (rem n d2))
+                                    b n = z V.! ((quot n d3)*(d2+d3) + (rem n d3) + d2)
+          parametricSolve m1 m2 = let (t1,t2) = triangularSolve m1 m2 in
+                                  pSolve t1 t2
+              where pSolve t1 t2 = let b = solExists t1 t2 in
+                                   case b of
+                                     Nothing -> Nothing
+                                     Just n -> let (v,vs) = constructSol n 0 (firstNonZeroInRow n t1) (V.empty,[]) in
+                                               Just (Tensor [d,e] v, map ((Tensor [d,e]) . (repl e)) vs)
+                        where d = last $ form t1
+                              e = last $ form t2
+                              repl m v = V.generate (m * V.length v) (\x -> v V.! quot x m)
+--                              constructSol :: Int  -- ^Current row
+--                                           -> Int  -- ^Position of leading one in previos row, starting from the end of the row
+--                                           -> Int  -- ^Position of leading one in current row
+--                                           -> (V.Vector e,[V.Vector e])
+--                                           -> (V.Vector e,[V.Vector e])
+                              constructSol m k f (v,vs) | m == 0 = addFreeVars k e (d-k) (v,vs)
+                                                        | otherwise = constructSol (m - 1) (d - f + 1) (firstNonZeroInRow (m - 1) t1)
+                                                                    ((content (unsafeMatrixGetRow m t2)) V.++ (addFreeVarsSol e (d - f - k) v), fr)
+                                  where
+                                    fr = addEntryKer (V.slice f (d - f) (content (unsafeMatrixGetRow m t1))) $ addFreeVarsKer k (d - f - k) vs
+                              -- returns Nothing if the system has no solution,
+                              -- otherwise Just the number of nonzero rows in
+                              -- the augmented matrix [x|y]. Notice: [x|y]
+                              -- should be in reduced row echelon form.
+                              solExists x y = solExists' (head $ form x)
+                                  where solExists' n | n == 0 = Just 0
+                                                     | otherwise = if isZeroRow n x
+                                                                   then if isZeroRow n y
+                                                                        then solExists' (n-1)
+                                                                        else Nothing
+                                                                   else Just n
+
+-- |Checks if i-th row of x is zero
+isZeroRow :: (Eq e, Num e) => Int -> Matrix i j e -> Bool
+isZeroRow i x = isZero (last $ form x) 1
+    where isZero d k | k <= d = if unsafeMatrixGet i k x == 0
+                                then isZero d (k+1)
+                                else False
+                     | otherwise = True
+
 
 
 -- | Row echelon form on Vector representation of the matrix
@@ -361,3 +403,37 @@ endClow x y = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. d], c <- [c'' ..
           b i j = unsafeMatrixGet i j y
           d = head $ form x
 
+
+
+addFreeVarsKer :: (Num e) => Int -> Int -> [V.Vector e] -> [V.Vector e]
+addFreeVarsKer _ 0 vs = vs
+addFreeVarsKer k n vs = addFree ++ (map ((V.++) (V.replicate n 0)) vs)
+    where addFree = map genFree (enumFromTo 1 n)
+          genFree i = (V.replicate (i-1) 0) V.++ (V.cons 1 $ V.replicate (n-i+k) 0)
+
+addEntryKer :: (Num e) => V.Vector e -> [V.Vector e] -> [V.Vector e]
+addEntryKer v vs = map addE vs
+    where addE x = V.cons (negate $ V.sum $ V.zipWith (*) v x) x
+
+
+addFreeVarsSol :: (Num e) => Int -> Int -> V.Vector e -> V.Vector e
+addFreeVarsSol _ 0 v = v
+addFreeVarsSol d n v = (V.replicate (n*d) 0) V.++ v
+
+addFreeVars :: (Num e) =>
+               Int
+            -> Int
+            -> Int
+            -> (V.Vector e,[V.Vector e])
+            -> (V.Vector e,[V.Vector e])
+addFreeVars k d n (v,vs) = (addFreeVarsSol d n v, addFreeVarsKer k n vs)
+
+
+-- |Returns the position of the first non-zero element in the n-th row
+-- of a matrix, or zero if the row is made of all zeroes
+firstNonZeroInRow :: (Eq e, Num e) => Int -> Matrix i j e -> Int
+firstNonZeroInRow n x = f n x 1
+    where f m y k | k <= (last $ form x) = if unsafeMatrixGet m k x /= 0
+                                          then k
+                                          else f m y (k+1)
+                  | otherwise = 0
