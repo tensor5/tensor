@@ -276,7 +276,7 @@ instance (Bounded i, Ordinal i, Sum i i) =>  SquareMatrix (Tensor (i :|: (i :|: 
               d = head $ form x
 
 
-instance (Fractional e, Ordinal i, Ordinal j) =>
+instance (Eq e, Fractional e, Ordinal i, Ordinal j) =>
     EchelonForm e i j (Tensor (i :|: (j :|: Nil)) e) where
         rowEchelonForm (Tensor ds v)
             = Tensor ds (rowEchelonOnVec (head ds) (head $ tail ds) 0 v)
@@ -295,7 +295,7 @@ instance (Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
 
 
 -- | Row echelon form on Vector representation of the matrix
-rowEchelonOnVec :: (Fractional a)
+rowEchelonOnVec :: (Eq a, Fractional a)
                     => Int -- ^ Number of rows
                     -> Int -- ^ Number of columns of the first matrix
                     -> Int -- ^ Number of columns of the second matrix

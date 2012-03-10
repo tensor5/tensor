@@ -139,7 +139,7 @@ instance Cardinality n => Cardinality (Succ n) where
 -- provide a convenient way to convert to and from a numeric type.
 class (Cardinality n, Ord n) => Ordinal n where
     fromOrdinal :: (Num i) => n -> i
-    toOrdinal :: (Num i) => i -> n
+    toOrdinal :: (Eq i, Num i) => i -> n
 
 instance (Ordinal m) => Sum m One where
     type m :+: One = Succ m

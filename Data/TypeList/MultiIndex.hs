@@ -123,7 +123,7 @@ instance (TailRevList l Nil, TailRevList (e :|: l) Nil) =>
 
 class TypeList i => MultiIndex i where
     fromMultiIndex :: (Num n) => i -> [n]
-    toMultiIndex :: (Num n) => [n] -> i
+    toMultiIndex :: (Eq n, Num n) => [n] -> i
     dimensions :: (Num n) => i -> [n]
 
 instance MultiIndex Nil where

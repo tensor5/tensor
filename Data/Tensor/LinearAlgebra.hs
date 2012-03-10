@@ -57,7 +57,7 @@ class (Fractional e, Ordinal i, Ordinal j) =>
 
 class SquareMatrix t where
     unit :: Num e => t e
-    inverse :: Fractional e => t e -> Maybe (t e)
+    inverse :: (Eq e, Fractional e) => t e -> Maybe (t e)
     tr :: Num e => t e -> e
     tr = last . charPoly
     -- | Computes the coefficient of the polynomial p(z)=det(A+zI)
