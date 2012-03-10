@@ -14,7 +14,6 @@ import           Data.Ordinal
 import           Data.Tensor hiding (Tensor)
 import qualified Data.Tensor as T
 import qualified Data.Vector as V
-import           Text.Show
 
 data Tensor i e = Tensor
     { form :: [Int]
@@ -35,16 +34,27 @@ type Matrix m n = Tensor (m :|: (n :|: Nil))
 
 
 instance Show e => Show (Tensor i e) where
-    showsPrec _ = showsT
-        where
-          showsT (Tensor [] v) = shows $ v V.! 0
-          showsT (Tensor [_] v) = showListWith shows (V.toList v)
-          showsT (Tensor (1:is) v) = showsT (Tensor is v) . (']':)
-          showsT (Tensor (i:is) v) = ('[':) . showsT (Tensor is x) . (',':) .
-                                     showsT (Tensor ((i-1):is) xs)
-              where
-                n = product is
-                (x,xs) = V.splitAt n v
+    showsPrec _ (Tensor [] v) = shows $ v V.! 0
+    showsPrec _ (Tensor ds v) = let sd = Prelude.reverse ds in
+                                let l = V.length v in
+                                let r = Prelude.length ds in
+                                showsT sd l (Prelude.replicate r 1) 1 .
+                                     (shows $ v V.! (l-1)) .
+                                     (Prelude.replicate r ']' ++)
+        where showsT sd l ys n = let (zs,k) = match sd ys in
+                               if n < l
+                               then showsT sd l zs (n+1) .
+                                     (shows $  v V.! (l-n-1)) .
+                                        (Prelude.replicate k ']' ++) .
+                                        (',':) . (Prelude.replicate k '[' ++)
+                               else (Prelude.replicate k '[' ++)
+              match is js = match' is js [] 0
+                  where match' [] _ zs n = (zs,n)
+                        match' _ [] zs n = (zs,n)
+                        match' (x:xs) (y:ys) zs n | x == y =
+                                                      match' xs ys (zs ++ [1]) (n+1)
+                                                  | otherwise =
+                                                      (zs ++ ((y+1):ys),n)
 
 
 instance Functor (Tensor i) where
