@@ -14,12 +14,13 @@ import           Data.Cardinal hiding (Succ)
 import qualified Data.Cardinal as C
 import           Data.TypeList.MultiIndex hiding (take, drop, length)
 import           Data.Ordinal
-import           Data.Tensor.LinearAlgebra
-import           Data.Tensor.Vector hiding (Matrix)
-import qualified Data.Tensor.Vector as TV
-import           Data.Tensor.Vector.Internal hiding (Matrix)
+import           Data.Tensor.LinearAlgebra hiding (Matrix)
+import qualified Data.Tensor.LinearAlgebra as LA
+import           Data.Tensor.Vector
+import           Data.Tensor.Vector.Internal
 import qualified Data.Vector as V
 import           Prelude hiding (replicate, zipWith)
+import qualified Prelude as P
 
 instance (Bounded i, Cardinality i, MultiIndex i) =>
     VectorSpace (Tensor i) where
@@ -59,7 +60,7 @@ instance DotProduct (Tensor i) where
     dot (Tensor _ x) (Tensor _ y) = V.sum $ V.zipWith (*) x y
 
 
-instance (Num e, Ordinal i, Ordinal j) => Matrix e i j (Tensor (i :|: (j :|: Nil)) e) where
+instance (Num e, Ordinal i, Ordinal j) => LA.Matrix e i j (Tensor (i :|: (j :|: Nil)) e) where
     rowSwitch i1 i2 (Tensor ds v) | i1 /= i2 = Tensor ds (rowSwitchOnVec
                                                           (fromOrdinal i1)
                                                           (fromOrdinal i2)
@@ -327,8 +328,8 @@ traceOnVec d x = trace 0 0
 
 
 initClow :: Num e =>
-            TV.Matrix i i e -- ^ Input matrix
-         -> TV.Matrix i i e -- ^ Matrix of length 2 clows
+            Matrix i i e -- ^ Input matrix
+         -> Matrix i i e -- ^ Matrix of length 2 clows
 initClow x = unsafeMatrixGen d d g
     where g c0 c' | c0 < c' = a c0 c'
                   | c0 == c' = negate $ sum [ a c'' c'' | c'' <- [1 .. c'-1]]
@@ -339,9 +340,9 @@ initClow x = unsafeMatrixGen d d g
 
 -- | Makes one more step in the clow sequence
 clowStep :: Num e =>
-            TV.Matrix i i e -- ^ Input matrix
-         -> TV.Matrix i i e -- ^ Input clow nodes of length l
-         -> TV.Matrix i i e -- ^ Output clow nodes of length l+1
+            Matrix i i e -- ^ Input matrix
+         -> Matrix i i e -- ^ Input clow nodes of length l
+         -> Matrix i i e -- ^ Output clow nodes of length l+1
 clowStep x y = unsafeMatrixGen d d g
     where g c0 c' | c0 < c' = sum [(b c0 c)*(a c c') | c <- [c0 .. d]]
                   | c0 == c' = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. c'-1], c <- [c'' .. d]]
@@ -352,8 +353,8 @@ clowStep x y = unsafeMatrixGen d d g
 
 
 endClow :: Num e =>
-           TV.Matrix i i e -- ^ Input matrix
-        -> TV.Matrix i i e -- ^ Input clow nodes of length l
+           Matrix i i e -- ^ Input matrix
+        -> Matrix i i e -- ^ Input clow nodes of length l
         -> e
 endClow x y = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. d], c <- [c'' .. d]]
     where a i j = unsafeMatrixGet i j x
