@@ -105,13 +105,13 @@ instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
     => DirectSum n (Tensor i e) (Tensor j e) where
         type SumSpace n (Tensor i e) (Tensor j e) = (Tensor (Concat n i j) e)
         directSum n (Tensor d x) (Tensor d' y) = Tensor ((take i d) ++ e'') (V.generate l g)
-            where l = foldl1 (*) ((take i d) ++ e'')
+            where l = product ((take i d) ++ e'')
                   e = drop i d
                   e' = drop i d'
                   e'' = ((d !! i) + (d' !! i)) : (drop (i+1) d)
-                  m = foldl1 (*) e
-                  m' = foldl1 (*) e'
-                  m'' = foldl1 (*) e''
+                  m = product e
+                  m' = product e'
+                  m'' = product e''
                   g k = if rem k m'' < m
                         then x V.! ((quot k m'')*m + (rem k m''))
                         else y V.! ((quot k m'')*m' + (rem k m'') - m)
