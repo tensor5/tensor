@@ -151,3 +151,7 @@ unsafeMatrixGen d e f = Tensor [d,e] $ V.generate (d*e)
                                f i j
                         )
 
+unsafeMatrixGetRow :: Int -> Matrix i j e -> Vector j e
+unsafeMatrixGetRow i (Tensor ds x) = Tensor (tail ds) $
+                                     V.slice ((i-1)*d) d x
+    where d = last ds
