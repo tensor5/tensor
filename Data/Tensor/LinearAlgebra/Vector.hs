@@ -152,6 +152,21 @@ instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
                                           |  otherwise = True
 
 
+instance (Eq e, Fractional e, Ordinal i, Ordinal j) =>
+    LinearSystem (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: Nil) e)
+        where
+          type SolSpace (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: Nil) e) = (Tensor (j :|: Nil) e)
+          triangularSolve a b =
+              let (a', b') = triangularSolve a (vector2ColumnVector b) in
+              (a', columnVector2Vector b')
+          parametricSolve a b =
+              let s = parametricSolve a (vector2ColumnVector b) in
+              case s of
+                Just (v, vs) ->
+                    Just (columnVector2Vector v, map columnVector2Vector vs)
+                Nothing -> Nothing
+
+
 -- |Checks if i-th row of x is zero
 isZeroRow :: (Eq e, Num e) => Int -> Matrix i j e -> Bool
 isZeroRow i x = isZero (last $ form x) 1
