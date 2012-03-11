@@ -61,191 +61,20 @@ instance DotProduct (Tensor i) where
 
 
 instance (Num e, Ordinal i, Ordinal j) => LA.Matrix e i j (Tensor (i :|: (j :|: Nil)) e) where
-    rowSwitch i1 i2 (Tensor ds v) | i1 /= i2 = Tensor ds (rowSwitchOnVec
-                                                          (fromOrdinal i1)
-                                                          (fromOrdinal i2)
-                                                          (head ds)
-                                                          (head $ tail ds)
-                                                          v
-                                                         )
-                                  | otherwise = Tensor ds v
-    colSwitch j1 j2 (Tensor ds v) | j1 /= j2 = Tensor ds (colSwitchOnVec
-                                                          (fromOrdinal j1)
-                                                          (fromOrdinal j2)
-                                                          (head ds)
-                                                          (head $ tail ds)
-                                                          v
-                                                         )
-                                  | otherwise = Tensor ds v
-    rowMult i a (Tensor ds v) = Tensor ds (rowMultOnVec
-                                           (fromOrdinal i)
-                                           a
-                                           (head ds)
-                                           (head $ tail ds)
-                                           v
-                                          )
-    colMult j a (Tensor ds v) = Tensor ds (colMultOnVec
-                                           (fromOrdinal j)
-                                           a
-                                           (head ds)
-                                           (head $ tail ds)
-                                           v
-                                          )
-    rowAdd i1 a i2 (Tensor ds v) = Tensor ds (rowAddOnVec
-                                              (fromOrdinal i1)
-                                              a
-                                              (fromOrdinal i2)
-                                              (head ds)
-                                              (head $ tail ds)
-                                              v
-                                             )
-    colAdd j1 a j2 (Tensor ds v) = Tensor ds (colAddOnVec
-                                              (fromOrdinal j1)
-                                              a
-                                              (fromOrdinal j2)
-                                              (head ds)
-                                              (head $ tail ds)
-                                              v
-                                             )
-
-
--- | Row switch on Vector representation of the matrix
-rowSwitchOnVec :: Int -- ^ First row to switch
-               -> Int -- ^ Second row to switch
-               -> Int -- ^ Number of rows
-               -> Int -- ^ Number of columns
-               -> V.Vector a -- ^ Input Vector
-               -> V.Vector a -- ^ Output Vector
-rowSwitchOnVec i1 i2 d e x = V.generate (d*e) rs
-    where rs n | e*(i1 -1) <= n && n < e*i1 = x V.! (n + off)
-               | e*(i2 -1) <= n && n < e*i2 = x V.! (n - off)
-               | otherwise = x V.! n
-          off = e * (i2 - i1)
-
--- | Column switch on Vector representation of the matrix
-colSwitchOnVec :: Int -- ^ First column to switch
-               -> Int -- ^ Second column to switch
-               -> Int -- ^ Number of rows
-               -> Int -- ^ Number of columns
-               -> V.Vector a -- ^ Input Vector
-               -> V.Vector a -- ^ Output Vector
-colSwitchOnVec j1 j2 d e x = V.generate (d*e) cs
-    where cs n | rem n e == j1 - 1 = x V.! (n + off)
-               | rem n e == j2 - 1 = x V.! (n - off)
-               | otherwise = x V.! n
-          off =  j2 - j1
-
--- | Row multiplication on Vector representation of the matrix
-rowMultOnVec :: Num a
-             => Int -- ^ Row to multiply
-             -> a -- ^ Multiplier
-             -> Int -- ^ Number of rows
-             -> Int -- ^ Number of columns
-             -> V.Vector a -- ^ Input Vector
-             -> V.Vector a -- ^ Output Vector
-rowMultOnVec i a d e x = V.generate (d*e) (\n ->
-                                              if (e*(i - 1)) <= n && n < e*i
-                                              then (x V.! n) * a
-                                              else x V.! n
-                                          )
-
--- | Column multiplication on Vector representation of the matrix
-colMultOnVec :: Num a
-             => Int -- ^ Column to multiply
-             -> a -- ^ Multiplier
-             -> Int -- ^ Number of rows
-             -> Int -- ^ Number of columns
-             -> V.Vector a -- ^ Input Vector
-             -> V.Vector a -- ^ Output Vector
-colMultOnVec j a d e x = V.generate (d*e) (\n -> if rem n e == j - 1
-                                                 then (x V.! n) * a
-                                                 else x V.! n
-                                          )
-
--- | Row division on Vector representation of the matrix
-rowDivOnVec :: Fractional a
-            => Int -- ^ Row to divide
-            -> a -- ^ Divisor
-            -> Int -- ^ Number of rows
-            -> Int -- ^ Number of columns
-            -> V.Vector a -- ^ Input Vector
-            -> V.Vector a -- ^ Output Vector
-rowDivOnVec i a d e x = V.generate (d*e) (\n ->
-                                             if (e*(i - 1)) <= n && n < e*i
-                                             then (x V.! n) / a
-                                             else x V.! n
-                                         )
-
--- | Column division on Vector representation of the matrix
-colDivOnVec :: Fractional a
-            => Int -- ^ Column to multiply
-            -> a -- ^ Divisor
-            -> Int -- ^ Number of rows
-            -> Int -- ^ Number of columns
-            -> V.Vector a -- ^ Input Vector
-            -> V.Vector a -- ^ Output Vector
-colDivOnVec j a d e x = V.generate (d*e) (\n -> if rem n e == j - 1
-                                                then (x V.! n) / a
-                                                else x V.! n
-                                          )
-
--- | Row add on Vector representation of the matrix
-rowAddOnVec :: Num a
-            => Int -- ^ Row we add to
-            -> a -- ^ How much of the row we wish to add
-            -> Int -- ^ Row we add
-            -> Int -- ^ Number of rows
-            -> Int -- ^ Number of columns
-            -> V.Vector a -- ^ Input Vector
-            -> V.Vector a -- ^ Output Vector
-rowAddOnVec i1 a i2 d e x = V.generate (d*e) ra
-    where ra n | e*(i1 -1) <= n && n < e*i1 = x V.! n + (x V.! (n + off))*a
-               | otherwise = x V.! n
-          off = e * (i2 - i1)
-
--- | Column add on Vector representation of the matrix
-colAddOnVec :: Num a
-            => Int -- ^ Column we add to
-            -> a -- ^ How much of the column we wish to add
-            -> Int -- ^ Column we add
-            -> Int -- ^ Number of rows
-            -> Int -- ^ Number of columns
-            -> V.Vector a -- ^ Input Vector
-            -> V.Vector a -- ^ Output Vector
-colAddOnVec j1 a j2 d e x = V.generate (d*e) ca
-    where ca n | rem n e == j1 - 1
-                   = x V.! n + (x V.! (n + off))*a
-               | otherwise = x V.! n
-          off = j2 - j1
-
--- | Row subtract on Vector representation of the matrix
-rowSubOnVec :: Num a
-            => Int -- ^ Row we subtract to
-            -> a -- ^ How much of the row we wish to subtract
-            -> Int -- ^ Row we add
-            -> Int -- ^ Number of rows
-            -> Int -- ^ Number of columns
-            -> V.Vector a -- ^ Input Vector
-            -> V.Vector a -- ^ Output Vector
-rowSubOnVec i1 a i2 d e x = V.generate (d*e) rs
-    where rs n | e*(i1 -1) <= n && n < e*i1 = x V.! n - (x V.! (n + off))*a
-               | otherwise = x V.! n
-          off = e * (i2 - i1)
-
--- | Column subtract on Vector representation of the matrix
-colSubOnVec :: Num a
-            => Int -- ^ Column we subtract to
-            -> a -- ^ How much of the column we wish to subtract
-            -> Int -- ^ Column we subtract
-            -> Int -- ^ Number of rows
-            -> Int -- ^ Number of columns
-            -> V.Vector a -- ^ Input Vector
-            -> V.Vector a -- ^ Output Vector
-colSubOnVec j1 a j2 d e x = V.generate (d*e) ca
-    where ca n | rem n e == j1 - 1
-                   = x V.! n - (x V.! (n + off))*a
-               | otherwise = x V.! n
-          off = j2 - j1
+    rowSwitch i1 i2 m | i1 /= i2 = unsafeMatrixRowSwitch
+                                   (fromOrdinal i1)
+                                   (fromOrdinal i2)
+                                   m
+                      | otherwise = m
+    colSwitch j1 j2 m | j1 /= j2 = unsafeMatrixColSwitch
+                                   (fromOrdinal j1)
+                                   (fromOrdinal j2)
+                                   m
+                      | otherwise = m
+    rowMult i a m = unsafeMatrixRowMult (fromOrdinal i) a m
+    colMult j a m = unsafeMatrixColMult (fromOrdinal j) a m
+    rowAdd i1 a i2 m = unsafeMatrixRowAdd (fromOrdinal i1) a (fromOrdinal i2) m
+    colAdd j1 a j2 m = unsafeMatrixColAdd (fromOrdinal j1) a (fromOrdinal j2) m
 
 
 instance (Bounded i, Ordinal i, Sum i i) =>  SquareMatrix (Tensor (i :|: (i :|: Nil))) where
@@ -279,29 +108,26 @@ instance (Bounded i, Ordinal i, Sum i i) =>  SquareMatrix (Tensor (i :|: (i :|: 
 
 instance (Eq e, Fractional e, Ordinal i, Ordinal j) =>
     EchelonForm e i j (Tensor (i :|: (j :|: Nil)) e) where
-        rowEchelonForm (Tensor ds v)
-            = Tensor ds (rowEchelonOnVec (head ds) (head $ tail ds) 0 v)
-
+--        rowEchelonForm (Tensor ds v)
+--            = Tensor ds (rowEchelonOnVec (head ds) (head $ tail ds) 0 v)
+              rowEchelonForm m = let (Tensor [_,e] _) = m in
+                                 fst $ partialRowEchelon m e
 
 instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
     LinearSystem (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e)
         where
           type SolSpace (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e) = (Tensor (j :|: (k :|: Nil)) e)
-          triangularSolve m1 m2
-              = let (Tensor [d1,_] x) = directSum (undefined :: C1) m1 m2
-                    (Tensor [_,d2] _) = m1
-                    (Tensor [_,d3] _) = m2 in
-                split d1 d2 d3 $ rowEchelonOnVec d1 d2 d3 x
-                    where split d1 d2 d3 z = (Tensor [d1,d2] (V.generate (d1*d2) a), Tensor [d1,d3] (V.generate (d1*d3) b))
-                              where a n = z V.! ((quot n d2)*(d2+d3) + (rem n d2))
-                                    b n = z V.! ((quot n d3)*(d2+d3) + (rem n d3) + d2)
-          parametricSolve m1 m2 = let (t1,t2) = triangularSolve m1 m2 in
-                                  pSolve t1 t2
-              where pSolve t1 t2 = let b = solExists t1 t2 in
-                                   case b of
-                                     Nothing -> Nothing
-                                     Just n -> let (v,vs) = constructSol n 0 (firstNonZeroInRow n t1) (V.empty,[]) in
-                                               Just (Tensor [d,e] v, map ((Tensor [d,e]) . (repl e)) vs)
+          triangularSolve m1 m2 =
+              let ((a, b), _) = rowEchelonOnAugmented m1 m2 in
+              (a, b)
+          parametricSolve m1 m2 =
+              let ((t1, t2), n) = rowEchelonOnAugmented m1 m2 in
+              pSolve t1 t2 n
+                 where pSolve t1 t2 n
+                           | solExists (n + 1) =
+                               let (v,vs) = constructSol n 0 (firstNonZeroInRow n t1) (V.empty,[]) in
+                               Just (Tensor [d,e] v, map ((Tensor [d,e]) . (repl e)) vs)
+                           | otherwise = Nothing
                         where d = last $ form t1
                               e = last $ form t2
                               repl m v = V.generate (m * V.length v) (\x -> v V.! quot x m)
@@ -319,13 +145,11 @@ instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
                               -- otherwise Just the number of nonzero rows in
                               -- the augmented matrix [x|y]. Notice: [x|y]
                               -- should be in reduced row echelon form.
-                              solExists x y = solExists' (head $ form x)
-                                  where solExists' n | n == 0 = Just 0
-                                                     | otherwise = if isZeroRow n x
-                                                                   then if isZeroRow n y
-                                                                        then solExists' (n-1)
-                                                                        else Nothing
-                                                                   else Just n
+                              solExists i | i <= d = if isZeroRow i t2
+                                                     then solExists (i+1)
+                                                     else False
+                                          |  otherwise = True
+
 
 -- |Checks if i-th row of x is zero
 isZeroRow :: (Eq e, Num e) => Int -> Matrix i j e -> Bool
@@ -336,28 +160,56 @@ isZeroRow i x = isZero (last $ form x) 1
                      | otherwise = True
 
 
+-- | '@rowEchelonOnAugmented@ a b' runs elementary row operation on
+-- the augmented matrix '[a|b]' until 'a' is in reduced row echelon
+-- form. The result is ((c,d),n), where [c|d] is the resulting matrix,
+-- and n is the rank of a.
+rowEchelonOnAugmented :: (Eq e, Fractional e, Sum j k, Ordinal i, Ordinal j, Ordinal k) =>
+                         Matrix i j e
+                      -> Matrix i k e
+                      -> ((Matrix i j e, Matrix i k e), Int)
+rowEchelonOnAugmented m1 m2 = let m = directSum (undefined :: C1) m1 m2
+                                  (Tensor [d,e1] _) = m1
+                                  (Tensor [_,e2] _) = m2
+                                  (a, n) = partialRowEchelon m e1 in
+                              (split d e1 e2 a, n)
+    where -- Splits a d*(e1+e2) matrix into two, one with e1 columns and one
+          -- with e2 columns with
+          split d e1 e2 x = (unsafeMatrixGen d e1 a, unsafeMatrixGen d e2 b)
+              where a i j = unsafeMatrixGet i j x
+                    b i j = unsafeMatrixGet i (j + e1) x
 
--- | Row echelon form on Vector representation of the matrix
-rowEchelonOnVec :: (Eq a, Fractional a)
-                    => Int -- ^ Number of rows
-                    -> Int -- ^ Number of columns of the first matrix
-                    -> Int -- ^ Number of columns of the second matrix
-                    -> V.Vector a -- ^ Input Vector
-                    -> V.Vector a -- ^ Output Vector
-rowEchelonOnVec d e1 e2 v = re 1 1 2 v
-    where re i j i' x | i > d || j > e1 = x
-                      | x V.! (coor i j) == 0 =
-                          if i' <= d
-                          then re i j (i'+1) (rowSwitchOnVec i i' d (e1+e2) x)
-                          else re i (j+1) (i+1) x
-                      | otherwise = re (i+1) (j+1) (i+2)
-                                    (rEl i 1 j (rowDivOnVec i (x V.! (coor i j)) d (e1+e2) x))
-          -- Assuming the (i,j) element of the matrix is 1, makes
-          -- 0 all the other elements in the j-th column
-          rEl i i' j x | i' > d = x
-                       | i' == i = rEl i (i'+1) j x
-                       | otherwise = rEl i (i'+1) j (rowSubOnVec i' (x V.! (coor i' j)) i d (e1+e2) x)
-          coor i j = (i - 1)*(e1+e2) + j - 1
+
+partialRowEchelon :: (Eq e, Fractional e) =>
+                     Matrix i j e
+                  -> Int
+                  -> (Matrix i j e, Int)
+partialRowEchelon m e = let (Tensor [d,_] _) = m in
+                        rEch m d 1 1 2 0
+    where rEch x d i j i' n = if i > d || j > e
+                              then (x, n)
+                              else if unsafeMatrixGet i j x == 0
+                                   then if i' <= d
+                                        then rEch
+                                                 (unsafeMatrixRowSwitch i i' x)
+                                                 d i j (i'+1) n
+                                        else rEch x d i (j+1) (i+1) n
+                                   else rEch
+                                            (rEl (unsafeMatrixRowDiv i
+                                                  (unsafeMatrixGet i j x)
+                                                  x)
+                                             d i j 1)
+                                            d (i+1) (j+1) (i+2) (n+1)
+          -- Assuming the (i,j) element of the matrix is 1, makes 0
+          -- all the other elements in the j-th column
+          rEl x d i j i' = if i' > d
+                           then x
+                           else if i' == i
+                                then rEl x d i j (i'+1)
+                                else rEl
+                           (unsafeMatrixRowSub i' (unsafeMatrixGet i' j x) i x)
+                           d i j (i'+1)
+
 
 traceOnVec :: (Num a) =>
               Int -- ^ Number of rows (or columns)
