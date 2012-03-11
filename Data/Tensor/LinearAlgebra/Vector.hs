@@ -131,14 +131,15 @@ instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
                         where d = last $ form t1
                               e = last $ form t2
                               repl m v = V.generate (m * V.length v) (\x -> v V.! quot x m)
---                              constructSol :: Int  -- ^Current row
---                                           -> Int  -- ^Position of leading one in previos row, starting from the end of the row
---                                           -> Int  -- ^Position of leading one in current row
---                                           -> (V.Vector e,[V.Vector e])
---                                           -> (V.Vector e,[V.Vector e])
-                              constructSol m k f (v,vs) | m == 0 = addFreeVars k e (d-k) (v,vs)
-                                                        | otherwise = constructSol (m - 1) (d - f + 1) (firstNonZeroInRow (m - 1) t1)
-                                                                    ((content (unsafeMatrixGetRow m t2)) V.++ (addFreeVarsSol e (d - f - k) v), fr)
+                              -- constructSol :: Int  -- ^Current row
+                              --              -> Int  -- ^Position of leading one in previos row, starting from the end of the row
+                              --              -> Int  -- ^Position of leading one in current row
+                              --              -> (V.Vector e,[V.Vector e])
+                              --              -> (V.Vector e,[V.Vector e])
+                              constructSol m k f (v,vs)
+                                  | m == 0 = addFreeVars k e (d-k) (v,vs)
+                                  | otherwise = constructSol (m - 1) (d - f + 1) (firstNonZeroInRow (m - 1) t1)
+                                                ((content (unsafeMatrixGetRow m t2)) V.++ (addFreeVarsSol e (d - f - k) v), fr)
                                   where
                                     fr = addEntryKer (V.slice f (d - f) (content (unsafeMatrixGetRow m t1))) $ addFreeVarsKer k (d - f - k) vs
                               -- returns Nothing if the system has no solution,
