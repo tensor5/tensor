@@ -20,17 +20,28 @@ data Tensor i e = Tensor
     } deriving Eq
 
 
-type ColumnVector n = Tensor (n :|: Nil)
-
-
-type Vector n = ColumnVector n
-
-
-type RowVector n = Tensor (One :|: (n :|: Nil))
+type Vector n = Tensor (n :|: Nil)
 
 
 type Matrix m n = Tensor (m :|: (n :|: Nil))
 
+
+type ColumnVector n = Matrix n One
+
+vector2ColumnVector :: Vector n e -> ColumnVector n e
+vector2ColumnVector (Tensor ds x) = (Tensor (ds ++ [1]) x)
+
+columnVector2Vector :: ColumnVector n e -> Vector n e
+columnVector2Vector (Tensor ds x) = (Tensor (init ds) x)
+
+
+type RowVector n = Matrix One n
+
+vector2RowVector :: Vector n e -> RowVector n e
+vector2RowVector (Tensor ds x) = (Tensor (1 : ds) x)
+
+rowVector2Vector :: RowVector n e -> Vector n e
+rowVector2Vector (Tensor ds x) = (Tensor (tail ds) x)
 
 instance Show e => Show (Tensor i e) where
     showsPrec _ (Tensor [] v) = shows $ v V.! 0

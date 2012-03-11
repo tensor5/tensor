@@ -1,9 +1,13 @@
 module Data.Tensor.Vector
     (Tensor,
-     ColumnVector,
      Vector,
-     RowVector,
      Matrix,
+     ColumnVector,
+     vector2ColumnVector,
+     columnVector2Vector,
+     RowVector,
+     vector2RowVector,
+     rowVector2Vector,
 
      FromVector(..),
 
