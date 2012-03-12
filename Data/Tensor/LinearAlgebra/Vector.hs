@@ -153,10 +153,8 @@ endClow x y = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. d], c <- [c'' ..
 
 instance (Eq e, Fractional e, Ordinal i, Ordinal j) =>
     EchelonForm e i j (Tensor (i :|: (j :|: Nil)) e) where
---        rowEchelonForm (Tensor ds v)
---            = Tensor ds (rowEchelonOnVec (head ds) (head $ tail ds) 0 v)
-              rowEchelonForm m = let (Tensor [_,e] _) = m in
-                                 fst $ partialRowEchelon m e
+        rowEchelonForm m = let (Tensor [_,e] _) = m in
+                           fst $ partialRowEchelon m e
 
 instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
     LinearSystem (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e)
