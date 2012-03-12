@@ -106,6 +106,51 @@ instance (Bounded i, Ordinal i, Sum i i) =>  SquareMatrix (Tensor (i :|: (i :|: 
               d = head $ form x
 
 
+traceOnVec :: (Num a) =>
+              Int -- ^ Number of rows (or columns)
+           -> V.Vector a -- ^ Vector representation of the matrix
+           -> a
+traceOnVec d x = trace 0 0
+    where trace i acc = if i < d*d
+                        then trace (i + d + 1) (acc + (x V.! i))
+                        else acc
+
+
+initClow :: Num e =>
+            Matrix i i e -- ^ Input matrix
+         -> Matrix i i e -- ^ Matrix of length 2 clows
+initClow x = unsafeMatrixGen d d g
+    where g c0 c' | c0 < c' = a c0 c'
+                  | c0 == c' = negate $ sum [ a c'' c'' | c'' <- [1 .. c'-1]]
+                  | otherwise = 0
+          a i j = unsafeMatrixGet i j x
+          d = head $ form x
+
+
+-- | Makes one more step in the clow sequence
+clowStep :: Num e =>
+            Matrix i i e -- ^ Input matrix
+         -> Matrix i i e -- ^ Input clow nodes of length l
+         -> Matrix i i e -- ^ Output clow nodes of length l+1
+clowStep x y = unsafeMatrixGen d d g
+    where g c0 c' | c0 < c' = sum [(b c0 c)*(a c c') | c <- [c0 .. d]]
+                  | c0 == c' = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. c'-1], c <- [c'' .. d]]
+                  | otherwise = 0
+          a i j = unsafeMatrixGet i j x
+          b i j = unsafeMatrixGet i j y
+          d = head $ form x
+
+
+endClow :: Num e =>
+           Matrix i i e -- ^ Input matrix
+        -> Matrix i i e -- ^ Input clow nodes of length l
+        -> e
+endClow x y = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. d], c <- [c'' .. d]]
+    where a i j = unsafeMatrixGet i j x
+          b i j = unsafeMatrixGet i j y
+          d = head $ form x
+
+
 instance (Eq e, Fractional e, Ordinal i, Ordinal j) =>
     EchelonForm e i j (Tensor (i :|: (j :|: Nil)) e) where
 --        rowEchelonForm (Tensor ds v)
@@ -176,6 +221,16 @@ isZeroRow i x = isZero (last $ form x) 1
                      | otherwise = True
 
 
+-- |Returns the position of the first non-zero element in the n-th row
+-- of a matrix, or zero if the row is made of all zeroes
+firstNonZeroInRow :: (Eq e, Num e) => Int -> Matrix i j e -> Int
+firstNonZeroInRow n x = f n x 1
+    where f m y k | k <= (last $ form x) = if unsafeMatrixGet m k x /= 0
+                                          then k
+                                          else f m y (k+1)
+                  | otherwise = 0
+
+
 -- | '@rowEchelonOnAugmented@ a b' runs elementary row operation on
 -- the augmented matrix '[a|b]' until 'a' is in reduced row echelon
 -- form. The result is ((c,d),n), where [c|d] is the resulting matrix,
@@ -227,57 +282,12 @@ partialRowEchelon m e = let (Tensor [d,_] _) = m in
                            d i j (i'+1)
 
 
-traceOnVec :: (Num a) =>
-              Int -- ^ Number of rows (or columns)
-           -> V.Vector a -- ^ Vector representation of the matrix
-           -> a
-traceOnVec d x = trace 0 0
-    where trace i acc = if i < d*d
-                        then trace (i + d + 1) (acc + (x V.! i))
-                        else acc
-
-
-initClow :: Num e =>
-            Matrix i i e -- ^ Input matrix
-         -> Matrix i i e -- ^ Matrix of length 2 clows
-initClow x = unsafeMatrixGen d d g
-    where g c0 c' | c0 < c' = a c0 c'
-                  | c0 == c' = negate $ sum [ a c'' c'' | c'' <- [1 .. c'-1]]
-                  | otherwise = 0
-          a i j = unsafeMatrixGet i j x
-          d = head $ form x
-
-
--- | Makes one more step in the clow sequence
-clowStep :: Num e =>
-            Matrix i i e -- ^ Input matrix
-         -> Matrix i i e -- ^ Input clow nodes of length l
-         -> Matrix i i e -- ^ Output clow nodes of length l+1
-clowStep x y = unsafeMatrixGen d d g
-    where g c0 c' | c0 < c' = sum [(b c0 c)*(a c c') | c <- [c0 .. d]]
-                  | c0 == c' = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. c'-1], c <- [c'' .. d]]
-                  | otherwise = 0
-          a i j = unsafeMatrixGet i j x
-          b i j = unsafeMatrixGet i j y
-          d = head $ form x
-
-
-endClow :: Num e =>
-           Matrix i i e -- ^ Input matrix
-        -> Matrix i i e -- ^ Input clow nodes of length l
-        -> e
-endClow x y = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. d], c <- [c'' .. d]]
-    where a i j = unsafeMatrixGet i j x
-          b i j = unsafeMatrixGet i j y
-          d = head $ form x
-
-
-
 addFreeVarsKer :: (Num e) => Int -> Int -> [V.Vector e] -> [V.Vector e]
 addFreeVarsKer _ 0 vs = vs
 addFreeVarsKer k n vs = addFree ++ (map ((V.++) (V.replicate n 0)) vs)
     where addFree = map genFree (enumFromTo 1 n)
           genFree i = (V.replicate (i-1) 0) V.++ (V.cons 1 $ V.replicate (n-i+k) 0)
+
 
 addEntryKer :: (Num e) => V.Vector e -> [V.Vector e] -> [V.Vector e]
 addEntryKer v vs = map addE vs
@@ -288,6 +298,7 @@ addFreeVarsSol :: (Num e) => Int -> Int -> V.Vector e -> V.Vector e
 addFreeVarsSol _ 0 v = v
 addFreeVarsSol d n v = (V.replicate (n*d) 0) V.++ v
 
+
 addFreeVars :: (Num e) =>
                Int
             -> Int
@@ -297,11 +308,3 @@ addFreeVars :: (Num e) =>
 addFreeVars k d n (v,vs) = (addFreeVarsSol d n v, addFreeVarsKer k n vs)
 
 
--- |Returns the position of the first non-zero element in the n-th row
--- of a matrix, or zero if the row is made of all zeroes
-firstNonZeroInRow :: (Eq e, Num e) => Int -> Matrix i j e -> Int
-firstNonZeroInRow n x = f n x 1
-    where f m y k | k <= (last $ form x) = if unsafeMatrixGet m k x /= 0
-                                          then k
-                                          else f m y (k+1)
-                  | otherwise = 0
