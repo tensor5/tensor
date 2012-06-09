@@ -1,4 +1,3 @@
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -6,8 +5,8 @@
 module Data.Tensor.LinearAlgebra where
 
 import Data.Cardinal
-import Data.Ordinal
-
+import Data.Tensor
+import Data.TypeList.MultiIndex
 
 class VectorSpace v where
     zero :: Num e => v e
@@ -35,19 +34,15 @@ class DotProduct t where
     dot :: (Num e) => t e -> t e -> e
 
 
-class (Num e, Ordinal i, Ordinal j) => Matrix e i j t
-                                     | t -> e, t -> i, t -> j where
-    rowSwitch :: i -> i -> t -> t
-    rowMult :: i -> e -> t -> t
-    rowAdd :: i -> e -> i -> t -> t
-    colSwitch :: j -> j -> t -> t
-    colMult :: j -> e -> t -> t
-    colAdd :: j -> e -> j -> t -> t
-
-
-class (Fractional e, Ordinal i, Ordinal j) => EchelonForm e i j t
-                                            | t -> e, t -> i, t -> j where
-    rowEchelonForm :: t -> t
+class (Tensor t, (Index t) ~ (i :|: (j :|: Nil))) =>
+    Matrix i j t where
+        rowSwitch :: i -> i -> t -> t
+        rowMult :: (Num e, (Elem t) ~ e) => i -> (Elem t) -> t -> t
+        rowAdd :: (Num e, (Elem t) ~ e) => i -> (Elem t) -> i -> t -> t
+        colSwitch :: j -> j -> t -> t
+        colMult :: (Num e, (Elem t) ~ e) => j -> (Elem t) -> t -> t
+        colAdd :: (Num e, (Elem t) ~ e) => j -> (Elem t) -> j -> t -> t
+        rowEchelonForm :: (Eq e, Fractional e, (Elem t) ~ e) => t -> t
 
 
 class LinearSystem t1 t2 where

@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -60,7 +59,7 @@ instance DotProduct (Tensor i) where
     dot (Tensor _ x) (Tensor _ y) = V.sum $ V.zipWith (*) x y
 
 
-instance (Num e, Ordinal i, Ordinal j) => LA.Matrix e i j (Tensor (i :|: (j :|: Nil)) e) where
+instance (Bounded i, Ordinal i, Bounded j, Ordinal j) => LA.Matrix i j (Tensor (i :|: (j :|: Nil)) e) where
     rowSwitch i1 i2 m | i1 /= i2 = unsafeMatrixRowSwitch
                                    (fromOrdinal i1)
                                    (fromOrdinal i2)
@@ -75,6 +74,8 @@ instance (Num e, Ordinal i, Ordinal j) => LA.Matrix e i j (Tensor (i :|: (j :|: 
     colMult j a m = unsafeMatrixColMult (fromOrdinal j) a m
     rowAdd i1 a i2 m = unsafeMatrixRowAdd (fromOrdinal i1) a (fromOrdinal i2) m
     colAdd j1 a j2 m = unsafeMatrixColAdd (fromOrdinal j1) a (fromOrdinal j2) m
+    rowEchelonForm m = let (Tensor [_,e] _) = m in
+                       fst $ partialRowEchelon m e
 
 
 instance (Bounded i, Ordinal i, Sum i i) =>  SquareMatrix (Tensor (i :|: (i :|: Nil))) where
@@ -150,11 +151,6 @@ endClow x y = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. d], c <- [c'' ..
           b i j = unsafeMatrixGet i j y
           d = head $ form x
 
-
-instance (Eq e, Fractional e, Ordinal i, Ordinal j) =>
-    EchelonForm e i j (Tensor (i :|: (j :|: Nil)) e) where
-        rowEchelonForm m = let (Tensor [_,e] _) = m in
-                           fst $ partialRowEchelon m e
 
 instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
     LinearSystem (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e)

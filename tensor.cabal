@@ -11,6 +11,7 @@ Build-Type:     Simple
 
 Library
   Build-Depends:   base == 4.*, vector
+  Build-Tools:     ghc >= 7.2.1
   ghc-options:     -Wall -O2
   Exposed-Modules: Data.Cardinal
                    Data.Ordinal
