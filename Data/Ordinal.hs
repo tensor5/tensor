@@ -35,7 +35,7 @@ module Data.Ordinal
 
 import           Data.Cardinal hiding (Succ)
 import qualified Data.Cardinal as C
-import           Data.Ord
+import           Data.Ord()
 import           Data.TypeAlgebra
 
 -- | A set with one element.
