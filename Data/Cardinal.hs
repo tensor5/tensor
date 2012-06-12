@@ -47,8 +47,6 @@ class Cardinal a where
     data Succ a
     fromCardinal :: (Num i) => a -> i
 
-instance Cardinal a => LEq a (Succ a)
-
 instance Cardinal Zero where
     data Succ Zero
     fromCardinal _ = 0

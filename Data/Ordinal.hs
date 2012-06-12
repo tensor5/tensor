@@ -162,25 +162,3 @@ instance (Ordinal m, Ordinal n, Prod m n, Sum m (m :*: n), Ordinal (m :+: (m :*:
         x <*> First = toOrdinal (fromOrdinal x :: Integer)
         x <*> (Succ y) = x <+> (x <*> y)
 
-{-
-instance SubSet One (Succ One) where
-    embed One = First
-
-instance SubSet n (Succ n) => SubSet (Succ n)  (Succ (Succ n)) where
-    embed First = First
-    embed (Succ x) = Succ (embed x)
--}
-
---instance Ordinal n => SubSet n n where
---    embed x = toOrdinal (fromOrdinal x :: Integer)
-{-
-instance (SubSet m n, SubSet n (Succ n)) => SubSet m (Succ n) where
-    embed x = let (a,b) = p undefined in
-              asTypeOf (embed (asTypeOf (embed x) a)) b
-        where p :: n -> (n, Succ n)
-              p n = (n, Succ n)
--}
-instance (Ordinal m, Ordinal n, SubSet m n) => SubSet m (Succ n) where
-    embed x = toOrdinal (fromOrdinal x :: Integer)
-
-instance Ordinal a => LEq a (Succ a)

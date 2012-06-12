@@ -15,17 +15,6 @@ class TypeList l where
     length _ = undefined
 
 
-class ToElem a e where
-    toElem :: e -> a
-
-
-class ToList a l where
-    toList :: l -> [a]
-    toList l = toListT l []
-    toListT :: l -> [a] -> [a]
-    toListT l xs = xs ++ toList l
-
-
 class (TypeList l, TypeList l') => AppendList l l' where
     type l :++: l'
     (<++>) :: l -> l' -> l :++: l'

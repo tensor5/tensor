@@ -12,7 +12,6 @@ class VectorSpace v where
     zero :: Num e => v e
     (*.) :: Num e => e -> v e -> v e
     (.+.) :: Num e => v e -> v e -> v e
---    dimension :: v -> Integer
 
 
 class (Cardinal n) => Product n t1 t2 where
