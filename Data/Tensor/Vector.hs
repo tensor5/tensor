@@ -1,3 +1,8 @@
+-- | This module define a datatype @'Tensor'@ which implements the
+-- classes and methods defined in "Data.Tensor" and
+-- "Data.Tensor.LinearAlgebra". It is represented internally as a
+-- @'Data.Vector.Vector'@.
+
 module Data.Tensor.Vector
     (Tensor,
      Vector,

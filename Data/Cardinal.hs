@@ -38,12 +38,11 @@ type C3 = Succ C2
 
 type C4 = Succ C3
 
+-- | Cardinal number as a type. The associated data type @'Succ' a@
+-- provides the next cardinal type. The method @'fromCardinal'@
+-- provides a numeric representation of the cardinal number; it should
+-- be independent on the argument and work on @'undefined'@.
 class Cardinal a where
-    -- | Cardinal number as a type. The associated data tyoe @'Succ'
-    -- a@ provides the next cardinal type. The method @'fromCardinal'@
-    -- provides a numeric representation of the cardinal number; it
-    -- should be independent on the argument and work on
-    -- @'undefined'@.
     data Succ a
     fromCardinal :: (Num i) => a -> i
 
@@ -63,9 +62,9 @@ instance Show Zero where
 instance Cardinal a => Show (Succ a) where
     show x = show (fromCardinal x :: Integer)
 
+-- | The cardinality of a type is defined by its @'Cardinal'@ type
+-- @'Card' a@.
 class Cardinal (Card a) => Cardinality a where
-    -- | The cardinality of a type is defined by its @'Cardinal'@ type
-    -- @'Card' a@.
     type Card a
 
 -- | The numeric cardinality of a type. @'card'@ is independent on its
