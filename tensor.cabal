@@ -1,12 +1,13 @@
 Name:           tensor
-Version:        0.0
+Version:        0.1
 Cabal-Version:  >= 1.8
 License:        GPL-3
 License-File:   LICENSE
 Author:         Federico Squartini, Nicola Squartini
 Maintainer:     Nicola Squartini <tensor5@gmail.com>
+Stability:      experimental
 Synopsis:       A completely type-safe library for linear algebra
-Category:       Data
+Category:       Data, Math
 Build-Type:     Simple
 Description:
   .
