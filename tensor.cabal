@@ -122,7 +122,7 @@ Description:
 Library
   Build-Depends:   base == 4.*, vector
   Build-Tools:     ghc >= 7.2.1
-  ghc-options:     -Wall -O2
+  GHC-Options:     -Wall -O2
   Exposed-Modules: Data.Cardinal
                    Data.Ordinal
                    Data.Tensor.LinearAlgebra
@@ -132,5 +132,6 @@ Library
                    Data.TypeList.MultiIndex
                    Data.Tensor
                    Data.Tensor.Vector
-  Other-modules: Data.Tensor.Vector.Internal
-                 Data.TypeList.MultiIndex.Internal
+  Other-modules:   Data.Tensor.Vector.Internal
+                   Data.TypeList.MultiIndex.Internal
+

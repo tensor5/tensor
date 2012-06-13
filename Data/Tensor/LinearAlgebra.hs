@@ -100,3 +100,4 @@ class SquareMatrix t where
     -- | Determinant of the matrix.
     det :: Num e => t e -> e
     det = head . charPoly
+

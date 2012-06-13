@@ -40,11 +40,13 @@ import           Prelude hiding (drop, take)
 data Nil = Nil
            deriving Eq
 
+
 -- |This is the constructor for heterogeneous lists, equivalent to
 -- @':'@ for standard lists. @'Nil'@ is used to end the lists, just
 -- like @'[]'@.
 data a :|: b = a :|: b
                 deriving Eq
+
 
 instance Cardinality Nil where
     type Card Nil = C1
@@ -77,7 +79,6 @@ instance TakeList Zero Nil where
 instance TakeList Zero l => TakeList Zero (e :|: l) where
     type Take Zero (e :|: l) = Nil
     take _ _ = Nil
-
 
 instance TakeList n l => TakeList (C.Succ n) (e :|: l) where
     type Take (C.Succ n) (e :|: l) = e :|: (Take n l)
@@ -185,3 +186,4 @@ instance Bounded Nil where
 instance (Bounded e, Bounded l) => Bounded (e :|: l) where
     minBound = minBound :|: minBound
     maxBound = maxBound :|: maxBound
+

@@ -4,10 +4,6 @@
 module Data.Tensor where
 
 
-class FromList t where
-    fromList :: [e] -> t e
-
-
 -- | A @'Tensor'@ is a map from an @'Index'@ type (which should be a
 -- @'MultiIndex'@) to an @'Elem'@ent type.
 class Tensor t where
@@ -25,6 +21,10 @@ class Tensor t where
     -- repeated.
     replicate :: Elem t -> t
     replicate e = generate (\_ -> e)
+
+
+class FromList t where
+    fromList :: [e] -> t e
 
 
 class DirectSum n t1 t2 where
