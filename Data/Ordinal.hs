@@ -121,13 +121,7 @@ instance Monad Succ where
     (Succ x) >>= f = f x
     return x = Succ x
 
-{-
-class Cardinal n where
-    -- | Number of elements inside the type @n@. In any instance of
-    -- @'Cardinal'@ the method @'card'@ should be independent on the
-    -- argument and work on @'undefined'@.
-    card :: (Num i) => n -> i
--}
+
 instance Cardinality One where
     type Card One = C.Succ Zero
 
