@@ -74,13 +74,6 @@ card = fromCardinal . c
          where c :: a -> Card a
                c _ = undefined
 
-instance Cardinality Zero where
-    type Card Zero = Zero
-
-instance Cardinality a => Cardinality (Succ a) where
-    type Card (Succ a) = Succ (Card a)
-
-
 instance Cardinal a => Sum a Zero where
     type a :+: Zero = a
     _ <+> _ = undefined
