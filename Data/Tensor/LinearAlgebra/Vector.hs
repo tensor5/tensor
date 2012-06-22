@@ -181,11 +181,11 @@ instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
                                                 ((content (unsafeMatrixGetRow m t2)) V.++ (addFreeVarsSol e (d - f - k) v), fr)
                                   where
                                     fr = addEntryKer (V.slice f (d - f) (content (unsafeMatrixGetRow m t1))) $ addFreeVarsKer k (d - f - k) vs
-                              -- returns Nothing if the system has no solution,
-                              -- otherwise Just the number of nonzero rows in
-                              -- the augmented matrix [x|y]. Notice: [x|y]
-                              -- should be in reduced row echelon form.
-                              solExists i | i <= d = if isZeroRow i t2
+                              -- returns False if the system has no
+                              -- solution, otherwise True. Notice: the
+                              -- augmented matrix [x|y] should be in
+                              -- reduced row echelon form.
+                              solExists i | i <= n = if isZeroRow i t2
                                                      then solExists (i+1)
                                                      else False
                                           |  otherwise = True
