@@ -112,7 +112,7 @@ instance (Bounded i, MultiIndex i) => T.Tensor (Tensor i e) where
               d = fromMultiIndex $ dims $ asTypeOf undefined t
 
 
-instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
+instance (Bounded i, Bounded j, Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
     => DirectSum n (Tensor i e) (Tensor j e) where
         type SumSpace n (Tensor i e) (Tensor j e) = (Tensor (Concat n i j) e)
         directSum n (Tensor d x) (Tensor d' y) = Tensor ((take i d) ++ e'') (V.generate l g)
@@ -127,6 +127,16 @@ instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
                         then x V.! ((quot k m'')*m + (rem k m''))
                         else y V.! ((quot k m'')*m' + (rem k m'') - m)
                   i = fromCardinal n
+        proj n t = (t1,t2)
+            where t1 = unsafeTensorGen d1 (\j -> unsafeTensorGet j t)
+                  d1 = fromMultiIndex $ dims $ asTypeOf undefined t1
+                  t2 = unsafeTensorGen d2 (\j -> unsafeTensorGet (f j) t)
+                  d2 = fromMultiIndex $ dims $ asTypeOf undefined t2
+                  i = fromCardinal n
+                  d1i = d1 !! i
+                  f j = if i == 0
+                        then ((j!!0) + d1i) : (drop 1 j)
+                        else (take i j) ++ (((j!!i) + d1i) : (drop (i + 1) j))
 
 
 instance (Ordinal i, Ordinal j) => Transpose (Tensor (i :|: (j :|: Nil)) e)

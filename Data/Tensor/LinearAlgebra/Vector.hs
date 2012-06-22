@@ -152,7 +152,7 @@ endClow x y = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. d], c <- [c'' ..
           d = head $ form x
 
 
-instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
+instance (Eq e, Fractional e, Bounded i, Bounded j, Bounded k, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
     LinearSystem (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e)
         where
           type SolSpace (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e) = (Tensor (j :|: (k :|: Nil)) e)
@@ -191,7 +191,7 @@ instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
                                           |  otherwise = True
 
 
-instance (Eq e, Fractional e, Ordinal i, Ordinal j) =>
+instance (Eq e, Fractional e, Bounded i, Bounded j, Ordinal i, Ordinal j) =>
     LinearSystem (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: Nil) e)
         where
           type SolSpace (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: Nil) e) = (Tensor (j :|: Nil) e)
@@ -229,20 +229,13 @@ firstNonZeroInRow n x = f n x 1
 -- the augmented matrix '[a|b]' until 'a' is in reduced row echelon
 -- form. The result is ((c,d),n), where [c|d] is the resulting matrix,
 -- and n is the rank of a.
-rowEchelonOnAugmented :: (Eq e, Fractional e, Sum j k, Ordinal i, Ordinal j, Ordinal k) =>
+rowEchelonOnAugmented :: (Eq e, Fractional e, Bounded i, Bounded j, Bounded k, Sum j k, Ordinal i, Ordinal j, Ordinal k) =>
                          Matrix i j e
                       -> Matrix i k e
                       -> ((Matrix i j e, Matrix i k e), Int)
 rowEchelonOnAugmented m1 m2 = let m = directSum (undefined :: C1) m1 m2
-                                  (Tensor [d,e1] _) = m1
-                                  (Tensor [_,e2] _) = m2
-                                  (a, n) = partialRowEchelon m e1 in
-                              (split d e1 e2 a, n)
-    where -- Splits a d*(e1+e2) matrix into two, one with e1 columns and one
-          -- with e2 columns with
-          split d e1 e2 x = (unsafeMatrixGen d e1 a, unsafeMatrixGen d e2 b)
-              where a i j = unsafeMatrixGet i j x
-                    b i j = unsafeMatrixGet i (j + e1) x
+                                  (a, n) = partialRowEchelon m (last $ form m1)
+                              in (proj (undefined :: C1) a, n)
 
 
 partialRowEchelon :: (Eq e, Fractional e) =>
