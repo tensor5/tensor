@@ -218,11 +218,11 @@ isZeroRow i x = isZero (last $ form x) 1
 -- |Returns the position of the first non-zero element in the n-th row
 -- of a matrix, or zero if the row is made of all zeroes
 firstNonZeroInRow :: (Eq e, Num e) => Int -> Matrix i j e -> Int
-firstNonZeroInRow n x = f n x 1
-    where f m y k | k <= (last $ form x) = if unsafeMatrixGet m k x /= 0
-                                          then k
-                                          else f m y (k+1)
-                  | otherwise = 0
+firstNonZeroInRow n x = go (last $ form x) 1
+    where go d k | k <= d = if unsafeMatrixGet n k x /= 0
+                            then k
+                            else go d (k+1)
+                 | otherwise = 0
 
 
 -- | '@rowEchelonOnAugmented@ a b' runs elementary row operation on
