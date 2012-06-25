@@ -23,6 +23,14 @@ class TypeList l where
     length _ = undefined
 
 
+class TypeList l => HeadTail l where
+    type Head l
+    type Tail l
+    head :: l -> Head l
+    tail :: l -> Tail l
+    (.|.) :: Head l -> Tail l -> l
+
+
 -- | A class for appending two @'TypeList'@s. The result of appending
 -- @l@ and @l'@ has type @l ':++:' l'@.
 class (TypeList l, TypeList l') => AppendList l l' where

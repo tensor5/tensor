@@ -11,7 +11,7 @@ module Data.Tensor.LinearAlgebra.Vector
 
 import           Data.Cardinal hiding (Succ)
 import qualified Data.Cardinal as C
-import           Data.TypeList.MultiIndex hiding (take, drop, length)
+import           Data.TypeList.MultiIndex hiding (head, take, drop, length)
 import           Data.Ordinal
 import           Data.Tensor.LinearAlgebra hiding (Matrix)
 import qualified Data.Tensor.LinearAlgebra as LA

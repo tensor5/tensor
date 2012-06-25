@@ -63,6 +63,14 @@ instance TypeList l => TypeList (e :|: l) where
     type Length (e :|: l) = C.Succ (Length l)
 
 
+instance TypeList l => HeadTail (e :|: l) where
+    type Head (e :|: l) = e
+    type Tail (e :|: l) = l
+    head (e :|: _) = e
+    tail (_ :|: l) = l
+    e .|. l = e :|: l
+
+
 instance TypeList l => AppendList Nil l where
     type Nil :++: l = l
     Nil <++> l = l
