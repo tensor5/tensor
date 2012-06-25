@@ -60,7 +60,7 @@ instance TypeList Nil where
     type Length Nil = C0
 
 instance TypeList l => TypeList (e :|: l) where
-    type Length (e :|: l) = Succ (Length l)
+    type Length (e :|: l) = C.Succ (Length l)
 
 
 instance TypeList l => AppendList Nil l where
