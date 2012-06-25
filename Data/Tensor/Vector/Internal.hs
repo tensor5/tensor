@@ -149,6 +149,23 @@ instance (Ordinal i, Ordinal j) => Transpose (Tensor (i :|: (j :|: Nil)) e)
                 d2 = head $ tail ds
 
 
+instance (MultiIndex i,
+          MultiIndex j,
+          Extend i l,
+          ReverseList j,
+          ReverseList (Ext i l),
+          Extend (Reverse j) (Reverse (Ext i l)),
+          ReverseList (Ext (Reverse j) (Reverse (Ext i l)))
+         ) => Sliceable i j (Tensor l e) where
+    type Slice i j (Tensor l e) =
+        Tensor (Reverse (Ext (Reverse j) (Reverse (Ext i l)))) e
+    slice i j t = unsafeTensorGen f (\k ->  unsafeTensorGet (ii ++ k ++ jj) t)
+        where ii = fromMultiIndex i
+              jj = fromMultiIndex j
+              f = drop (Prelude.length ii) $
+                  take ((Prelude.length $ form t) - Prelude.length jj) (form t)
+
+
 unsafeTensorGet :: [Int] -> Tensor i e -> e
 unsafeTensorGet is (Tensor ds x) = x V.! linearize ds is
 
