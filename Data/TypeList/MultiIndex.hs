@@ -195,3 +195,12 @@ instance (Bounded e, Bounded l) => Bounded (e :|: l) where
     minBound = minBound :|: minBound
     maxBound = maxBound :|: maxBound
 
+
+instance Extend Nil l' where
+    type Ext Nil l' = l'
+    extend _ l' = l'
+
+instance Extend l l' => Extend (e :|: l) (e :|: l') where
+    type Ext (e :|: l) (e :|: l') = Ext l l'
+    extend (e :|: l) k = e :|: extend l k
+

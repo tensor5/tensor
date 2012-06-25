@@ -81,3 +81,10 @@ instance (ReverseList (Drop n (Reverse l)),
         type Join n l l' = (Reverse (Drop n (Reverse l))) :++: Drop n l'
         join n l l' = reverse (drop n (reverse l)) <++> drop n l'
 
+
+-- | Extend the list @l@ to @l'@ by adding the necessary extension
+-- @'Ext' l l'@.
+class Extend l l' where
+    type Ext l l'
+    extend :: l -> Ext l l' -> l'
+
