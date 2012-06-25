@@ -23,6 +23,19 @@ class Tensor t where
     replicate e = generate (\_ -> e)
 
 
+-- | @'elemMap' f t@ applies @f@ to every @'Elem'@ent of @t@.
+elemMap :: (Tensor t1, Tensor t2, Index t1 ~ Index t2) => (Elem t1 -> Elem t2) -> t1 -> t2
+elemMap f t = generate (\i -> f (t ! i))
+
+
+-- | In @'indexMap' f t@, the @'Elem'@ent corresponding to the
+-- @'Index'@ @i@ is the @'Elem'@ent that @t@ assignes to the @'Index'@
+-- @f i@.
+indexMap :: (Tensor t1, Tensor t2, Elem t1 ~ Elem t2) =>
+            (Index t1 -> Index t2) -> t2 -> t1
+indexMap f t = generate (\i -> t ! f i)
+
+
 class FromList t where
     fromList :: [e] -> t e
 
