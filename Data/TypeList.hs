@@ -4,9 +4,9 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | The Module "Data.TypeList" is a collection of classes to
+-- | The Module @"Data.TypeList"@ is a collection of classes to
 -- manipulate lists of types, a.k.a. heterogeneous lists.  Check the
--- module "Data.TypeList.MultiIndex" for a concrete implementation
+-- module @"Data.TypeList.MultiIndex"@ for a concrete implementation
 -- of @'TypeList'@.
 
 module Data.TypeList where
@@ -16,7 +16,7 @@ import Prelude hiding (drop, reverse)
 
 
 -- | Every @'TypeList'@ has a @'Length'@. The @'Length'@ is actually a
--- type, and should be a @'Cardinal'@ (see "Data.Cardinal").
+-- type, and should be a @'Cardinal'@ (see @"Data.Cardinal"@).
 class TypeList l where
     type Length l
     length :: l -> Length l
