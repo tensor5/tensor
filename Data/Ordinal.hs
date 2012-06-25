@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -37,10 +38,11 @@ import           Data.Cardinal hiding (Succ)
 import qualified Data.Cardinal as C
 import           Data.Ord()
 import           Data.TypeAlgebra
+import qualified GHC.Generics as G
 
 -- | A set with one element.
 data One = One
-           deriving Eq
+           deriving (Eq, G.Generic)
 
 instance Bounded One where
     minBound = One
@@ -72,7 +74,7 @@ instance Show One where
 -- | If @n@ is a set with n elements, @'Succ' n@ is a set with n+1 elements.
 data Succ n = First -- ^ The first element of the type.
             | Succ n -- ^ The last @n@ elements.
-              deriving Eq
+              deriving (Eq, G.Generic)
 
 type Two = Succ One
 type Three = Succ Two

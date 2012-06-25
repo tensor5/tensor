@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -34,18 +35,19 @@ import qualified Data.Cardinal as C
 import           Data.Ordinal
 import           Data.TypeList
 import           Data.TypeList.MultiIndex.Internal
+import qualified GHC.Generics as G
 import           Prelude hiding (drop, take)
 
 
 data Nil = Nil
-           deriving Eq
+           deriving (Eq, G.Generic)
 
 
 -- |This is the constructor for heterogeneous lists, equivalent to
 -- @':'@ for standard lists. @'Nil'@ is used to end the lists, just
 -- like @'[]'@.
 data a :|: b = a :|: b
-                deriving Eq
+                deriving (Eq, G.Generic)
 
 
 instance Cardinality Nil where

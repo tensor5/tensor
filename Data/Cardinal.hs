@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -20,13 +21,18 @@ module Data.Cardinal
     , Cardinality(..)
     , card
 
+    , GCardinality(..)
+
     , module Data.TypeAlgebra
 
     ) where
 
-import Data.TypeAlgebra
+import           Data.TypeAlgebra
+import           GHC.Generics hiding ((:+:), (:*:), C1)
+import qualified GHC.Generics as G
 
 data Zero
+    deriving G.Generic
 
 type C0 = Zero
 
@@ -90,3 +96,26 @@ instance Cardinal a => Prod a Zero where
 instance (Cardinal a, Prod a b) => Prod a (Succ b) where
     type a :*: (Succ b) = a :+: (a :*: b)
     _ <*> _ = undefined
+
+
+class GCardinality a where
+    type GCard a
+
+instance GCardinality (V1 p) where
+    type GCard (V1 p) = Zero
+
+instance GCardinality (U1 p) where
+    type GCard (U1 p) = Succ Zero
+
+instance Cardinality a => GCardinality (K1 i a p) where
+    type GCard (K1 i a p) = Card a
+
+instance GCardinality (f p) => GCardinality (M1 i c f p) where
+    type GCard (M1 i c f p) = GCard (f p)
+
+instance (GCardinality (f p), GCardinality (g p)) => GCardinality ((f G.:+: g) p) where
+    type GCard ((f G.:+: g) p) = (GCard (f p)) :+: (GCard (g p))
+
+instance (GCardinality (f p), GCardinality (g p)) => GCardinality ((f G.:*: g) p) where
+    type GCard ((f G.:*: g) p) = (GCard (f p)) :*: (GCard (g p))
+

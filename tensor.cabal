@@ -16,7 +16,7 @@ Description:
   tutorial.
 
 Library
-  Build-Depends:   base == 4.*, vector
+  Build-Depends:   base == 4.*, ghc-prim, vector
   Build-Tools:     ghc >= 7.2.1
   GHC-Options:     -Wall -O2
   Exposed-Modules: Data.Cardinal
