@@ -24,7 +24,6 @@ Library
                    Data.Tensor
                    Data.Tensor.Examples
                    Data.Tensor.LinearAlgebra
-                   Data.Tensor.LinearAlgebra.Vector
                    Data.Tensor.Vector
                    Data.TypeAlgebra
                    Data.TypeList

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -17,25 +18,27 @@ class VectorSpace v where
 -- | A general form of product between two tensors, in which the last
 -- @n@ dimensions of @t1@ are contracted with the first @n@ dimensions
 -- of @t2@. The resulting tensor belongs to the space @'ProdSpace' n
--- t1 t2@. @'MatrixProduct'@ and @'TensorProduct'@ below are
--- particular cases where @n@ is equal to 1 and 0 respectively.
+-- t1 t2@. The operators @'.*.'@ and @⊗@ below are particular cases
+-- where @n@ is equal to 1 and 0 respectively.
 class (Cardinal n) => Product n t1 t2 where
     type ProdSpace n t1 t2
     prod :: n -> t1 -> t2 -> ProdSpace n t1 t2
 
 
+type MatrixProductSpace t1 t2 = ProdSpace (Succ Zero) t1 t2
+
 -- | It is the product of the last dimension of @t1@ with the first
 -- dimension of @t2@. In the case where @t1@ and @t2@ are matrices this
 -- coincide with the ordinary matrix product.
-class MatrixProduct t1 t2 where
-    type MatrixProductSpace t1 t2
-    (.*.) :: t1 -> t2 -> MatrixProductSpace t1 t2
+(.*.) :: (Product (Succ Zero) t1 t2) => t1 -> t2 -> MatrixProductSpace t1 t2
+x .*. y = prod (undefined :: C1) x y
 
+
+type t1 :⊗: t2 = ProdSpace C0 t1 t2
 
 -- | Tensor product of @t1@ and @t2@.
-class TensorProduct t1 t2 where
-    type t1 :⊗: t2
-    (⊗) :: t1 -> t2 -> t1 :⊗: t2
+(⊗) :: (Product C0 t1 t2) => t1 -> t2 -> t1 :⊗: t2
+(⊗) = prod (undefined :: C0)
 
 
 class DotProduct t where

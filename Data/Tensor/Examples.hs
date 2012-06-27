@@ -89,9 +89,9 @@ type inference, we could simply write
 2
 
 And now a couple of examples of algebraic operations (requires adding
-"Data.Tensor.LinearAlgebra.Vector" to the import list):
+@"Data.Tensor.LinearAlgebra"@ to the import list):
 
->>> :m Data.Ordinal Data.TypeList.MultiIndex Data.Tensor.Vector Data.Tensor.LinearAlgebra.Vector
+>>> :m Data.Ordinal Data.TypeList.MultiIndex Data.Tensor.Vector Data.Tensor.LinearAlgebra
 >>> let a = fromList [2,3,5,1,3,6,0,5,4,2,1,3] :: Matrix Four Three Int
 >>> let b = fromList [7,3,-6] :: Vector Three Int
 >>> a .*. b
