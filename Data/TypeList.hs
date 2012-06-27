@@ -12,7 +12,7 @@
 module Data.TypeList where
 
 import Data.Cardinal
-import Prelude hiding (drop, reverse)
+import Prelude hiding ((!!), drop, head, reverse, tail)
 
 
 -- | Every @'TypeList'@ has a @'Length'@. The @'Length'@ is actually a
@@ -29,6 +29,24 @@ class TypeList l => HeadTail l where
     head :: l -> Head l
     tail :: l -> Tail l
     (.|.) :: Head l -> Tail l -> l
+
+
+-- | Extracts the @n@-th component of the list @l@
+class Component l n where
+    type l :!!: n
+    -- | The second argument of @'!!'@ should always be @'undefined'
+    -- :: n@.
+    (!!) :: l -> n -> l :!!: n
+
+instance HeadTail l => Component l Zero where
+    type l :!!: Zero = Head l
+    (!!) l _ = head l
+
+instance (HeadTail l, Component (Tail l) n) => Component l (Succ n) where
+    type l :!!: (Succ n) = (Tail l) :!!: n
+    (!!) l n = (tail l) !! (p n)
+        where p :: Succ n -> n
+              p _ = undefined
 
 
 -- | A class for appending two @'TypeList'@s. The result of appending

@@ -7,7 +7,7 @@
 module Data.Tensor.Vector.Internal where
 
 import           Data.Cardinal
-import           Data.TypeList.MultiIndex hiding (head, drop, length, tail, take)
+import           Data.TypeList.MultiIndex hiding ((!!), head, drop, length, tail, take)
 import           Data.TypeList.MultiIndex.Internal
 import           Data.Ordinal
 import           Data.Tensor hiding (Tensor)
