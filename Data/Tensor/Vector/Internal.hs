@@ -483,6 +483,24 @@ firstNonZeroInRow n x = go (last $ form x) 1
                  | otherwise = 0
 
 
+-- |Returns the position of the first element satisfying the predicate, in the row i, starting from column j.
+findInRow :: Int -> Int -> (e -> Bool) -> Matrix i j e -> Maybe Int
+findInRow i j p x = go (last $ form x) j
+    where go d k | k <= d = if p $ unsafeMatrixGet i k x
+                            then Just k
+                            else go d (k+1)
+                 | otherwise = Nothing
+
+
+-- |Returns the position of the first element satisfying the predicate, in the column j, starting from row i.
+findInCol :: Int -> Int -> (e -> Bool) -> Matrix i j e -> Maybe Int
+findInCol j i p x = go (head $ form x) i
+    where go d k | k <= d = if p $ unsafeMatrixGet k j x
+                            then Just k
+                            else go d (k+1)
+                 | otherwise = Nothing
+
+
 -- | '@rowEchelonOnAugmented@ a b' runs elementary row operation on
 -- the augmented matrix '[a|b]' until 'a' is in reduced row echelon
 -- form. The result is ((c,d),n), where [c|d] is the resulting matrix,
@@ -501,30 +519,46 @@ partialRowEchelon :: (Eq e, Fractional e) =>
                   -> Int
                   -> (Matrix i j e, Int)
 partialRowEchelon m e = let (Tensor [d,_] _) = m in
-                        rEch m d 1 1 2 0
-    where rEch x d i j i' n = if i > d || j > e
+                        rEch m d 1 1 0
+    where rEch x d i j n = if i > d || j > e
                               then (x, n)
-                              else if unsafeMatrixGet i j x == 0
-                                   then if i' <= d
-                                        then rEch
-                                                 (unsafeMatrixRowSwitch i i' x)
-                                                 d i j (i'+1) n
-                                        else rEch x d i (j+1) (i+1) n
-                                   else rEch
-                                            (rEl (unsafeMatrixRowDiv i
-                                                  (unsafeMatrixGet i j x)
-                                                  x)
-                                             d i j 1)
-                                            d (i+1) (j+1) (i+2) (n+1)
-          -- Assuming the (i,j) element of the matrix is 1, makes 0
-          -- all the other elements in the j-th column
-          rEl x d i j i' = if i' > d
-                           then x
-                           else if i' == i
-                                then rEl x d i j (i'+1)
-                                else rEl
-                           (unsafeMatrixRowSub i' (unsafeMatrixGet i' j x) i x)
-                           d i j (i'+1)
+                              else case gaussSwitchToNonZero i j x of
+                                     Just y -> let y' = (unsafeMatrixRowDiv i
+                                                         (unsafeMatrixGet i j x)
+                                                         y) in
+                                               rEch (gaussClearColUp i j $ gaussClearColDown i j y') d (i+1) (j+1) (n+1)
+                                     Nothing -> rEch x d i (j+1) n
+
+
+-- |Find the firt non-zero element in the part of the column j
+-- starting from the element (i,j) going down, and switch the row with
+-- it.
+gaussSwitchToNonZero :: (Eq e, Num e) => Int -> Int -> Matrix i j e -> Maybe (Matrix i j e)
+gaussSwitchToNonZero i j m = case findInCol j i (/= 0) m of
+                               Just k -> Just $ unsafeMatrixRowSwitch i k m
+                               Nothing -> Nothing
+
+-- |By adding multiples of rows to each other, makes zero all the
+-- elements above (i,j).
+gaussClearColUp :: (Eq e, Num e) => Int -> Int -> Matrix i j e -> Matrix i j e
+gaussClearColUp i j m = go m (i-1) (unsafeMatrixGet i j m)
+    where go x i' a = if i' == 0
+                      then x
+                      else if a == 1
+                           then go (unsafeMatrixRowSub i' (unsafeMatrixGet i' j x) i x) (i'-1) a
+                           else go (unsafeMatrixRowSub i' (unsafeMatrixGet i' j x) i (unsafeMatrixRowMult i' a x)) (i'-1) a
+
+
+-- |By adding multiples of rows to each other, makes zero all the
+-- elements below (i,j).
+gaussClearColDown :: (Eq e, Num e) => Int -> Int -> Matrix i j e -> Matrix i j e
+gaussClearColDown i j m = let (Tensor [d,_] _) = m in
+                          go m d (i+1) (unsafeMatrixGet i j m)
+    where go x d i' a = if i' > d
+                        then x
+                        else if a == 1
+                             then go (unsafeMatrixRowSub i' (unsafeMatrixGet i' j x) i x) d (i'+1) a
+                           else go (unsafeMatrixRowSub i' (unsafeMatrixGet i' j x) i (unsafeMatrixRowMult i' a x)) d (i'+1) a
 
 
 addFreeVarsKer :: (Num e) => Int -> Int -> [V.Vector e] -> [V.Vector e]
