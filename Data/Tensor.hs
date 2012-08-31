@@ -12,7 +12,6 @@ class Tensor t where
     -- | @'dims'@ returns the dimensions of the @'Tensor'@. In any
     -- instance of @'Tensor'@ @'dims'@ should be independent of its
     -- argument and work on @'undefined'@.
-    dims :: t -> Index t
     -- | Returns the @'Elem'@ent of @t@ corresponding to @'Index' t@.
     (!) :: t -> Index t -> Elem t
     -- | Generates a @'Tensor'@ according to the given function.

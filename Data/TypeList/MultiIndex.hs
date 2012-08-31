@@ -26,6 +26,7 @@ module Data.TypeList.MultiIndex
 
     , MultiIndex(..)
     , multiIndex2Linear
+    , Dimensions(..)
     , MultiIndexConcat(..)
 
     ) where
@@ -132,13 +133,11 @@ instance (TailRevList l Nil, TailRevList (e :|: l) Nil) =>
         reverse l = rev l Nil
 
 
-class TypeList i => MultiIndex i where
+class (Dimensions i, TypeList i) => MultiIndex i where
     fromMultiIndex :: (Num n) => i -> [n]
     toMultiIndex :: (Eq n, Num n) => [n] -> i
-    dimensions :: (Num n) => i -> [n]
 
 instance MultiIndex Nil where
-    dimensions _ = []
     fromMultiIndex Nil = []
     toMultiIndex [] = Nil
     toMultiIndex (_:_) = error "(toMultiIndex x): list too long"
@@ -147,8 +146,6 @@ instance Show Nil where
     show x = show (fromMultiIndex x :: [Integer])
 
 instance (Ordinal i, MultiIndex is) => MultiIndex (i :|: is) where
-    dimensions z = d (asTypeOf (undefined:|:undefined) z)
-        where d (x :|: y) = (card x):(dimensions y)
     fromMultiIndex (x :|: y) = (fromOrdinal x):(fromMultiIndex y)
     toMultiIndex (x:xs) = (toOrdinal x) :|: (toMultiIndex xs)
     toMultiIndex [] = error "(toMultiIndex x): list too short"
@@ -161,6 +158,19 @@ multiIndex2Linear :: (MultiIndex i, Num n) => i -> n
 multiIndex2Linear i = linearize d l
     where l = fromMultiIndex i
           d = dimensions i
+
+
+-- | Class for types having multiple dimensions, like @'MultiIndex'@es
+-- or @'Tensor'@s.
+class Dimensions i where
+    dimensions :: (Num n) => i -> [n]
+
+instance Dimensions Nil where
+    dimensions _ = []
+
+instance (Ordinal i, Dimensions is) => Dimensions (i :|: is) where
+    dimensions z = d (asTypeOf (undefined:|:undefined) z)
+        where d (x :|: y) = (card x):(dimensions y)
 
 
 class (Cardinal n, MultiIndex is, MultiIndex js) =>

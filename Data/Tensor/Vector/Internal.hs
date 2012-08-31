@@ -103,16 +103,21 @@ instance (Bounded i, Cardinality i, MultiIndex i) =>
 instance (Bounded i, MultiIndex i) => T.Tensor (Tensor i e) where
     type Index (Tensor i e) = i
     type Elem (Tensor i e) = e
-    dims _ = maxBound
     (Tensor _ x) ! j = x V.! multiIndex2Linear j
     generate f = t
         where t = Tensor d $
                   V.generate (product d) (f . toMultiIndex . (unlinearize d))
-              d = fromMultiIndex $ dims $ asTypeOf undefined t
+              d = dimensions t
     replicate e = t
         where t = Tensor d $
                   V.replicate (product d) e
-              d = fromMultiIndex $ dims $ asTypeOf undefined t
+              d = dimensions t
+
+
+instance Dimensions i => Dimensions (Tensor i e) where
+    dimensions t = dimensions $ shape t
+                    where shape :: Tensor i e -> i
+                          shape _ = undefined
 
 
 instance (Bounded i, Bounded j, Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
@@ -132,9 +137,9 @@ instance (Bounded i, Bounded j, Cardinal n, MultiIndex i, MultiIndex j, MultiInd
                   i = fromCardinal n
         proj n t = (t1,t2)
             where t1 = unsafeTensorGen d1 (\j -> unsafeTensorGet j t)
-                  d1 = fromMultiIndex $ dims $ asTypeOf undefined t1
+                  d1 = dimensions t1
                   t2 = unsafeTensorGen d2 (\j -> unsafeTensorGet (f j) t)
-                  d2 = fromMultiIndex $ dims $ asTypeOf undefined t2
+                  d2 = dimensions t2
                   i = fromCardinal n
                   d1i = d1 !! i
                   f j = if i == 0
@@ -343,7 +348,7 @@ instance (Bounded i, Ordinal i, Sum i i) =>  SquareMatrix (Tensor (i :|: (i :|: 
                        then 1
                        else 0
                  i = head d
-                 d = dimensions $ dims (asTypeOf undefined u)
+                 d = dimensions u
     inverse m = let (f,s) = triangularSolve m u in
                 if f == u
                 then Just s
