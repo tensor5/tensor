@@ -83,24 +83,21 @@ class FromVector t where
     fromVector :: V.Vector e -> t e
 
 
-instance (Bounded i, Cardinality i, MultiIndex i) =>
-    FromVector (Tensor i) where
-        fromVector x = toTensor maxBound x
-            where
-              toTensor :: (Cardinality i, MultiIndex i) =>
-                          i -> V.Vector e -> Tensor i e
-              toTensor i v | V.length v < l = error ("fromVector: length of vector \
-                                                     \must be at least " ++ show l)
-                           | otherwise = Tensor (dimensions i) (V.take l v)
-                           where l = card i
+instance MultiIndex i => FromVector (Tensor i) where
+    fromVector x = toTensor undefined x
+        where
+          toTensor :: MultiIndex i => i -> V.Vector e -> Tensor i e
+          toTensor i v | V.length v < l = error ("fromVector: length of vector \
+                                                 \must be at least " ++ show l)
+                       | otherwise = Tensor (dimensions i) (V.take l v)
+              where l = product $ dimensions i
 
 
-instance (Bounded i, Cardinality i, MultiIndex i) =>
-    FromList (Tensor i) where
-        fromList = fromVector . V.fromList
+instance MultiIndex i => FromList (Tensor i) where
+    fromList = fromVector . V.fromList
 
 
-instance (Bounded i, MultiIndex i) => T.Tensor (Tensor i e) where
+instance MultiIndex i => T.Tensor (Tensor i e) where
     type Index (Tensor i e) = i
     type Elem (Tensor i e) = e
     (Tensor _ x) ! j = x V.! multiIndex2Linear j
@@ -120,7 +117,7 @@ instance Dimensions i => Dimensions (Tensor i e) where
                           shape _ = undefined
 
 
-instance (Bounded i, Bounded j, Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
+instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
     => DirectSum n (Tensor i e) (Tensor j e) where
         type SumSpace n (Tensor i e) (Tensor j e) = (Tensor (Concat n i j) e)
         directSum n (Tensor d x) (Tensor d' y) = Tensor ((take i d) ++ e'') (V.generate l g)
@@ -294,12 +291,10 @@ unsafeMatrixColSub j1 a j2 (Tensor ds x) = Tensor ds $ V.generate (d*e) cs
           off = j2 - j1
 
 
-instance (Bounded i, Cardinality i, MultiIndex i) =>
-    VectorSpace (Tensor i) where
-        zero = T.replicate 0
-        a *. t = fmap (* a) t
-        (.+.) = T.zipWith (+)
---    dimension _ = dim (undefined :: i)
+instance MultiIndex i => VectorSpace (Tensor i) where
+    zero = T.replicate 0
+    a *. t = fmap (* a) t
+    (.+.) = T.zipWith (+)
 
 
 instance (Num e, Cardinal n, MultiIndex i, MultiIndex j, JoinList n i j) =>
@@ -322,26 +317,29 @@ instance DotProduct (Tensor i) where
     dot (Tensor _ x) (Tensor _ y) = V.sum $ V.zipWith (*) x y
 
 
-instance (Bounded i, Ordinal i, Bounded j, Ordinal j) => LA.Matrix i j (Tensor (i :|: (j :|: Nil)) e) where
-    rowSwitch i1 i2 m | i1 /= i2 = unsafeMatrixRowSwitch
-                                   (fromOrdinal i1)
-                                   (fromOrdinal i2)
-                                   m
-                      | otherwise = m
-    colSwitch j1 j2 m | j1 /= j2 = unsafeMatrixColSwitch
-                                   (fromOrdinal j1)
-                                   (fromOrdinal j2)
-                                   m
-                      | otherwise = m
-    rowMult i a m = unsafeMatrixRowMult (fromOrdinal i) a m
-    colMult j a m = unsafeMatrixColMult (fromOrdinal j) a m
-    rowAdd i1 a i2 m = unsafeMatrixRowAdd (fromOrdinal i1) a (fromOrdinal i2) m
-    colAdd j1 a j2 m = unsafeMatrixColAdd (fromOrdinal j1) a (fromOrdinal j2) m
-    rowEchelonForm m = let (Tensor [_,e] _) = m in
-                       fst $ partialRowEchelon m e
+instance (Ordinal i, Ordinal j) => LA.Matrix i j (Tensor (i :|: (j :|: Nil)) e)
+    where
+      rowSwitch i1 i2 m | i1 /= i2 = unsafeMatrixRowSwitch
+                                     (fromOrdinal i1)
+                                     (fromOrdinal i2)
+                                     m
+                        | otherwise = m
+      colSwitch j1 j2 m | j1 /= j2 = unsafeMatrixColSwitch
+                                     (fromOrdinal j1)
+                                     (fromOrdinal j2)
+                                     m
+                        | otherwise = m
+      rowMult i a m = unsafeMatrixRowMult (fromOrdinal i) a m
+      colMult j a m = unsafeMatrixColMult (fromOrdinal j) a m
+      rowAdd i1 a i2 m =
+          unsafeMatrixRowAdd (fromOrdinal i1) a (fromOrdinal i2) m
+      colAdd j1 a j2 m =
+          unsafeMatrixColAdd (fromOrdinal j1) a (fromOrdinal j2) m
+      rowEchelonForm m = let (Tensor [_,e] _) = m in
+                         fst $ partialRowEchelon m e
 
 
-instance (Bounded i, Ordinal i, Sum i i) =>  SquareMatrix (Tensor (i :|: (i :|: Nil))) where
+instance (Ordinal i, Sum i i) => SquareMatrix (Tensor (i :|: (i :|: Nil))) where
     unit = u
            where u = Tensor d $ V.generate (i*i) g
                  g n = if rem n (i + 1) == 0
@@ -415,7 +413,7 @@ endClow x y = negate $ sum [(b c''  c)*(a c c'') | c'' <- [1 .. d], c <- [c'' ..
           d = head $ form x
 
 
-instance (Eq e, Fractional e, Bounded i, Bounded j, Bounded k, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
+instance (Eq e, Fractional e, Ordinal i, Ordinal j, Ordinal k, Sum j k) =>
     LinearSystem (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e)
         where
           type SolSpace (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: (k :|: Nil)) e) = (Tensor (j :|: (k :|: Nil)) e)
@@ -454,7 +452,7 @@ instance (Eq e, Fractional e, Bounded i, Bounded j, Bounded k, Ordinal i, Ordina
                                           |  otherwise = True
 
 
-instance (Eq e, Fractional e, Bounded i, Bounded j, Ordinal i, Ordinal j) =>
+instance (Eq e, Fractional e, Ordinal i, Ordinal j) =>
     LinearSystem (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: Nil) e)
         where
           type SolSpace (Tensor (i :|: (j :|: Nil)) e) (Tensor (i :|: Nil) e) = (Tensor (j :|: Nil) e)
@@ -510,7 +508,7 @@ findInCol j i p x = go (head $ form x) i
 -- the augmented matrix '[a|b]' until 'a' is in reduced row echelon
 -- form. The result is ((c,d),n), where [c|d] is the resulting matrix,
 -- and n is the rank of a.
-rowEchelonOnAugmented :: (Eq e, Fractional e, Bounded i, Bounded j, Bounded k, Sum j k, Ordinal i, Ordinal j, Ordinal k) =>
+rowEchelonOnAugmented :: (Eq e, Fractional e, Sum j k, Ordinal i, Ordinal j, Ordinal k) =>
                          Matrix i j e
                       -> Matrix i k e
                       -> ((Matrix i j e, Matrix i k e), Int)
