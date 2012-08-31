@@ -366,6 +366,9 @@ instance (Ordinal i, Sum i i) => SquareMatrix (Tensor (i :|: (i :|: Nil))) where
                                          (negate s)
                                          ((s * endClow x v):acc)
               d = head $ form x
+    polyEval _ [] = zero
+    polyEval _ [e] = e *. unit
+    polyEval x (e:es) = (e *. unit) .+. (x .*. (polyEval x es))
 
 
 traceOnVec :: (Num a) =>

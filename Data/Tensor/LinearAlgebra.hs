@@ -103,4 +103,6 @@ class SquareMatrix t where
     -- | Determinant of the matrix.
     det :: Num e => t e -> e
     det = head . charPoly
+    -- | Evaluate a polynomial on a matrix.
+    polyEval :: Num e => t e -> [e] -> t e
 
