@@ -366,6 +366,11 @@ instance (Ordinal i, Sum i i) => SquareMatrix (Tensor (i :|: (i :|: Nil))) where
                                          (negate s)
                                          ((s * endClow x v):acc)
               d = head $ form x
+    minPoly x = let (y,n) = gaussBigMatr x in
+                go y n n []
+        where go z r k ls = if k == 0
+                            then ls
+                            else go z r (k-1) ((negate (unsafeMatrixGet (r+1) k z)):ls)
     polyEval _ [] = zero
     polyEval _ [e] = e *. unit
     polyEval x (e:es) = (e *. unit) .+. (x .*. (polyEval x es))
@@ -629,4 +634,25 @@ addFreeVars :: (Num e) =>
             -> (V.Vector e,[V.Vector e])
 addFreeVars k d n (v,vs) = (addFreeVarsSol d n v, addFreeVarsKer k n vs)
 
+
+bigMatr :: (Num e, Sum i i, Ordinal i)
+           => Matrix i i e -> Matrix (Data.Ordinal.Succ i) (i :*: i) e
+bigMatr x = Tensor [n+1,n^(2::Int)] $
+            V.concat (map content (take (n+1) $ iterate (.*. x) (asTypeOf unit x)))
+    where n = head $ dimensions x
+
+
+gaussBigMatr :: (Eq e, Fractional e, Sum i i, Ordinal i) =>
+                Matrix i i e -> (Matrix (Data.Ordinal.Succ i) (i :*: i) e, Int)
+gaussBigMatr m = let l = bigMatr m
+                     (Tensor [_,d] _) = l in
+                 cEch l d 1 1 0
+    where cEch x d i j n = if j > d
+                           then (x,n)
+                           else case gaussSwitchToNonZeroCol i j x of
+                                  Just y -> let y' = (unsafeMatrixColDiv j
+                                                      (unsafeMatrixGet i j x)
+                                                      y) in
+                                            cEch (gaussClearRowLeft i j $ gaussClearRowRight i j y') d (i+1) (j+1) (n+1)
+                                  Nothing -> (x,n)
 

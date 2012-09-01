@@ -100,6 +100,12 @@ class SquareMatrix t where
     -- resulting list. The k-th coefficient is the sum of all
     -- principal minors of order n-k+1.
     charPoly :: Num e => t e -> [e]
+    -- | Minimal polynomial. The algorithm follows the paper of
+    -- S. Bialas and M. Bialas
+    -- <http://bulletin.pan.pl/(56-4)391.pdf>. The number of
+    -- operations is O(n^4), where n is the number of rows of the
+    -- matrix.
+    minPoly :: (Eq e, Fractional e) => t e -> [e]
     -- | Determinant of the matrix.
     det :: Num e => t e -> e
     det = head . charPoly
