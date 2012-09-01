@@ -17,6 +17,12 @@ module Data.Cardinal
     , C2
     , C3
     , C4
+    , C5
+    , C6
+    , C7
+    , C8
+    , C9
+    , C10
 
     , Cardinality(..)
     , card
@@ -43,6 +49,18 @@ type C2 = Succ C1
 type C3 = Succ C2
 
 type C4 = Succ C3
+
+type C5 = Succ C4
+
+type C6 = Succ C5
+
+type C7 = Succ C6
+
+type C8 = Succ C7
+
+type C9 = Succ C8
+
+type C10 = Succ C9
 
 -- | Cardinal number as a type. The associated data type @'Succ' a@
 -- provides the next cardinal type. The method @'fromCardinal'@

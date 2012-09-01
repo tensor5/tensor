@@ -27,6 +27,11 @@ module Data.Ordinal
     , Three
     , Four
     , Five
+    , Six
+    , Seven
+    , Eight
+    , Nine
+    , Ten
 
     , Ordinal(..)
 
@@ -80,6 +85,11 @@ type Two = Succ One
 type Three = Succ Two
 type Four = Succ Three
 type Five = Succ Four
+type Six = Succ Five
+type Seven = Succ Six
+type Eight = Succ Seven
+type Nine = Succ Eight
+type Ten = Succ Nine
 
 instance (Bounded n) => Bounded (Succ n) where
     minBound = First
