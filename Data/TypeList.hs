@@ -37,14 +37,20 @@ class Component l n where
     -- | The second argument of @'!!'@ should always be @'undefined'
     -- :: n@.
     (!!) :: l -> n -> l :!!: n
+    -- | Applies the given function to one component of the list.
+    partialMap :: n -> (l :!!: n -> l :!!: n) -> l -> l
 
 instance HeadTail l => Component l Zero where
     type l :!!: Zero = Head l
     (!!) l _ = head l
+    partialMap _ f l = f (head l) .|. tail l
 
 instance (HeadTail l, Component (Tail l) n) => Component l (Succ n) where
     type l :!!: (Succ n) = (Tail l) :!!: n
     (!!) l n = (tail l) !! (p n)
+        where p :: Succ n -> n
+              p _ = undefined
+    partialMap n f l = (head l) .|. partialMap (p n) f (tail l)
         where p :: Succ n -> n
               p _ = undefined
 
