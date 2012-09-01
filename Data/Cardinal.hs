@@ -32,7 +32,7 @@ import           GHC.Generics hiding ((:+:), (:*:), C1)
 import qualified GHC.Generics as G
 
 data Zero
-    deriving G.Generic
+    deriving Generic
 
 type C0 = Zero
 
