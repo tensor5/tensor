@@ -128,7 +128,7 @@ instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
                         then x V.! ((quot k m'')*m + (rem k m''))
                         else y V.! ((quot k m'')*m' + (rem k m'') - m)
                   i = fromCardinal n
-        proj n t = (t1,t2)
+        split n t = (t1,t2)
             where t1 = unsafeTensorGen d1 (\j -> unsafeTensorGet j t)
                   d1 = dimensions t1
                   t2 = unsafeTensorGen d2 (\j -> unsafeTensorGet (f j) t)
@@ -520,7 +520,7 @@ rowEchelonOnAugmented :: (Eq e, Fractional e, Sum j k, Ordinal i, Ordinal j, Ord
                       -> ((Matrix i j e, Matrix i k e), Int)
 rowEchelonOnAugmented m1 m2 = let m = directSum (undefined :: C1) m1 m2
                                   (a, n) = partialRowEchelon m (last $ form m1)
-                              in (proj (undefined :: C1) a, n)
+                              in (split (undefined :: C1) a, n)
 
 
 partialRowEchelon :: (Eq e, Fractional e) =>

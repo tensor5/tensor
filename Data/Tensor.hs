@@ -44,7 +44,7 @@ class FromList t where
 class DirectSum n t1 t2 where
     type SumSpace n t1 t2
     directSum :: n -> t1 -> t2 -> SumSpace n t1 t2
-    proj :: n -> SumSpace n t1 t2 -> (t1,t2)
+    split :: n -> SumSpace n t1 t2 -> (t1,t2)
 
 
 class Transpose t where
