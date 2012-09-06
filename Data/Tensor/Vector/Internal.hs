@@ -105,10 +105,6 @@ instance MultiIndex i => T.Tensor (Tensor i e) where
         where t = Tensor d $
                   V.generate (product d) (f . toMultiIndex . (unlinearize d))
               d = dimensions t
-    replicate e = t
-        where t = Tensor d $
-                  V.replicate (product d) e
-              d = dimensions t
 
 
 instance Dimensions i => Dimensions (Tensor i e) where

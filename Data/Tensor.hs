@@ -16,10 +16,12 @@ class Tensor t where
     (!) :: t -> Index t -> Elem t
     -- | Generates a @'Tensor'@ according to the given function.
     generate :: (Index t -> Elem t) -> t
-    -- | Generates a @'Tensor'@ consisting of the same @'Elem'@ent
-    -- repeated.
-    replicate :: Elem t -> t
-    replicate e = generate (\_ -> e)
+
+
+-- | Generates a @'Tensor'@ consisting of the same @'Elem'@ent
+-- repeated.
+replicate :: Tensor t => Elem t -> t
+replicate e = generate (\_ -> e)
 
 
 -- | @'elemMap' f t@ applies @f@ to every @'Elem'@ent of @t@.
