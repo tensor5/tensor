@@ -163,6 +163,8 @@ multiIndex2Linear i = linearize d l
 -- | Class for types having multiple dimensions, like @'MultiIndex'@es
 -- or @'Tensor'@s.
 class Dimensions i where
+    -- | Returns the dimensions list. It should always be independent
+    -- on its argument and work on @'undefined'@.
     dimensions :: (Num n) => i -> [n]
 
 instance Dimensions Nil where
