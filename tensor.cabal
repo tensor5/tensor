@@ -6,14 +6,15 @@ License-File:   LICENSE
 Author:         Federico Squartini, Nicola Squartini
 Maintainer:     Nicola Squartini <tensor5@gmail.com>
 Stability:      experimental
+Homepage:	http://noaxiom.org/tensor
 Synopsis:       A completely type-safe library for linear algebra
 Category:       Data, Math
 Build-Type:     Simple
 Description:
 
   This library defines data types and classes for fixed dimension
-  vectors and tensors. See @"Data.Tensor.Examples"@ for a short
-  tutorial.
+  vectors and tensors. See the homepage <http://noaxiom.org/tensor>
+  for more details, or @"Data.Tensor.Examples"@ for a short tutorial.
 
 Library
   Build-Depends:   base == 4.*, ghc-prim, vector
