@@ -189,18 +189,6 @@ instance (Cardinal n, Ordinal i, MultiIndex js, MultiIndex ks
         type Concat (C.Succ n) (i :|: js) (i :|: ks) = (i :|: Concat n js ks)
 
 
-instance Ord Nil where
-    compare Nil Nil = EQ
-
-instance (Ord e, Ord l) => Ord (e :|: l) where
-    compare (x :|: xs) (y :|: ys) = c (compare x y) (compare xs ys)
-                                    where c EQ e = e
-                                          c e EQ = e
-                                          c LT LT = LT
-                                          c GT GT = GT
-                                          c _ _ = undefined
-
-
 instance Bounded Nil where
     minBound = Nil
     maxBound = Nil
