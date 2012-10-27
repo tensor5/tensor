@@ -113,6 +113,11 @@ instance Dimensions i => Dimensions (Tensor i e) where
                           shape _ = undefined
 
 
+instance (Bounded e, MultiIndex i) => Bounded (Tensor i e) where
+    maxBound = T.replicate maxBound
+    minBound = T.replicate minBound
+
+
 instance (Cardinal n, MultiIndex i, MultiIndex j, MultiIndexConcat n i j)
     => DirectSum n (Tensor i e) (Tensor j e) where
         type SumSpace n (Tensor i e) (Tensor j e) = (Tensor (Concat n i j) e)
