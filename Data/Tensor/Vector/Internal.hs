@@ -533,7 +533,7 @@ partialRowEchelon m e = let (Tensor [d,_] _) = m in
                               then (x, n)
                               else case gaussSwitchToNonZeroRow i j x of
                                      Just y -> let y' = (unsafeMatrixRowDiv i
-                                                         (unsafeMatrixGet i j x)
+                                                         (unsafeMatrixGet i j y)
                                                          y) in
                                                rEch (gaussClearColUp i j $ gaussClearColDown i j y') d (i+1) (j+1) (n+1)
                                      Nothing -> rEch x d i (j+1) n
@@ -641,14 +641,14 @@ bigMatr x = Tensor [n+1,n^(2::Int)] $
 gaussBigMatr :: (Eq e, Fractional e, Sum i i, Ordinal i) =>
                 Matrix i i e -> (Matrix (Data.Ordinal.Succ i) (i :*: i) e, Int)
 gaussBigMatr m = let l = bigMatr m
-                     (Tensor [_,d] _) = l in
-                 cEch l d 1 1 0
-    where cEch x d i j n = if j > d
-                           then (x,n)
-                           else case gaussSwitchToNonZeroCol i j x of
-                                  Just y -> let y' = (unsafeMatrixColDiv j
-                                                      (unsafeMatrixGet i j x)
-                                                      y) in
-                                            cEch (gaussClearRowLeft i j $ gaussClearRowRight i j y') d (i+1) (j+1) (n+1)
-                                  Nothing -> (x,n)
+                     (Tensor [d,e] _) = l in
+                 cEch l d e 1 1 0
+    where cEch x d e i j n | i > d || j > e || n >= (d - 1) = (x,n)
+                           | otherwise =
+                               case gaussSwitchToNonZeroCol i j x of
+                                 Just y -> let y' = (unsafeMatrixColDiv j
+                                                     (unsafeMatrixGet i j y)
+                                                     y) in
+                                           cEch (gaussClearRowLeft i j $ gaussClearRowRight i j y') d e (i+1) (j+1) (n+1)
+                                 Nothing -> (x,n)
 
