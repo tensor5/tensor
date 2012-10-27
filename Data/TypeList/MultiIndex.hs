@@ -38,6 +38,7 @@ import           Data.TypeList
 import           Data.TypeList.MultiIndex.Internal
 import qualified GHC.Generics as G
 import           Prelude hiding (drop, take)
+import           System.Random
 
 
 data Nil = Nil
@@ -193,10 +194,21 @@ instance Bounded Nil where
     minBound = Nil
     maxBound = Nil
 
+instance Random Nil where
+    randomR _ g = (Nil, snd $ next g)
+    random g = (Nil, snd $ next g)
+
 instance (Bounded e, Bounded l) => Bounded (e :|: l) where
     minBound = minBound :|: minBound
     maxBound = maxBound :|: maxBound
 
+instance (Random e, Random l) => Random (e :|: l) where
+    randomR (e :|: l, e' :|: h) g = let (a, g') = randomR (e, e') g
+                                        (b, g'') = randomR (l, h) g'
+                                    in (a :|: b, g'')
+    random g = let (a, g') = random g
+                   (b, g'') = random g'
+               in (a :|: b, g'')
 
 instance Extend Nil l' where
     type Ext Nil l' = l'

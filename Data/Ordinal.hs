@@ -44,6 +44,7 @@ import qualified Data.Cardinal as C
 import           Data.Ord()
 import           Data.TypeAlgebra
 import qualified GHC.Generics as G
+import           System.Random
 
 -- | A set with one element.
 data One = One
@@ -75,6 +76,10 @@ instance Enum One where
 
 instance Show One where
     show One = "1"
+
+instance Random One where
+    randomR _ g = (One, snd $ next g)
+    random g = (One, snd $ next g)
 
 -- | If @n@ is a set with n elements, @'Succ' n@ is a set with n+1 elements.
 data Succ n = First -- ^ The first element of the type.
@@ -108,6 +113,12 @@ instance (Ordinal n) => Ordinal (Succ n) where
     fromOrdinal (Succ x) = 1 + fromOrdinal x
     toOrdinal x | x == 1 = First
                 | otherwise = Succ (toOrdinal (x - 1))
+
+instance (Bounded n, Ordinal n) => Random (Succ n) where
+    randomR (l,h) g =
+        let (r,g') = randomR (fromOrdinal l :: Integer, fromOrdinal h) g
+        in (toOrdinal r, g')
+    random g = randomR (minBound,maxBound) g
 
 instance (Bounded n, Enum n, Ordinal n) => Enum (Succ n) where
     succ First = Succ minBound

@@ -17,7 +17,7 @@ Description:
   for more details, or @"Data.Tensor.Examples"@ for a short tutorial.
 
 Library
-  Build-Depends:   base == 4.*, ghc-prim, vector
+  Build-Depends:   base == 4.*, ghc-prim, random, vector
   Build-Tools:     ghc >= 7.2.1
   GHC-Options:     -Wall -O2
   Exposed-Modules: Data.Cardinal

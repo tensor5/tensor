@@ -15,6 +15,7 @@ import qualified Data.Tensor as T
 import qualified Data.Vector as V
 import           Data.Tensor.LinearAlgebra hiding (Matrix)
 import qualified Data.Tensor.LinearAlgebra as LA
+import           System.Random hiding (split)
 
 
 data Tensor i e = Tensor
@@ -92,9 +93,30 @@ instance MultiIndex i => FromList (Tensor i) where
     fromList = fromVector . V.fromList
 
 
+instance (MultiIndex i, Random e) => Random (Tensor i e) where
+    randomR (l, h) g = (t, g')
+        where (t, g') = let l' = V.toList $ content l
+                            h' = V.toList $ content h
+                            (es, g1) = randomListR (l', h') g
+                        in (fromList es, g1)
+    random g = (t, g')
+        where (t, g') = let (es, g1) = randomsWithLength d g
+                        in (fromList es, g1)
+              d = product $ dimensions t
 
-instance MultiIndex i => FromList (Tensor i) where
-    fromList = fromVector . V.fromList
+
+randomListR :: (Random a, RandomGen g) => ([a], [a]) -> g -> ([a], g)
+randomListR ([], _) g = ([], g)
+randomListR (_, []) g = ([], g)
+randomListR (l:ls, h:hs) g = let (x, g1) = randomR (l, h) g
+                                 (xs, g2) = randomListR (ls, hs) g1
+                             in (x:xs, g2)
+
+randomsWithLength :: (Random a, RandomGen g) => Int -> g -> ([a], g)
+randomsWithLength 0 g = ([], g)
+randomsWithLength d g = let (x, g') = random g
+                            (xs, g'') = randomsWithLength (d-1) g'
+                        in (x:xs, g'')
 
 
 instance MultiIndex i => T.Tensor (Tensor i e) where
