@@ -14,7 +14,7 @@ module Data.Tensor.Vector
      vector2RowVector,
      rowVector2Vector,
 
-     FromVector(..),
+     fromVector,
 
      module Data.Tensor
 

@@ -78,19 +78,19 @@ instance Zip (Tensor i) where
     zipWith f (Tensor d x) (Tensor _ y) = Tensor d $ V.zipWith f x y
 
 
+fromVector :: MultiIndex i => V.Vector e -> (Tensor i e)
+fromVector x = t
+    where
+      t | V.length x < l = error ("fromVector: length of vector \
+                                  \must be at least " ++ show l)
+        | otherwise = Tensor d (V.take l x)
+          where l = product d
+                d = dimensions t
 
-class FromVector t where
-    fromVector :: V.Vector e -> t e
 
+instance MultiIndex i => FromList (Tensor i) where
+    fromList = fromVector . V.fromList
 
-instance MultiIndex i => FromVector (Tensor i) where
-    fromVector x = toTensor undefined x
-        where
-          toTensor :: MultiIndex i => i -> V.Vector e -> Tensor i e
-          toTensor i v | V.length v < l = error ("fromVector: length of vector \
-                                                 \must be at least " ++ show l)
-                       | otherwise = Tensor (dimensions i) (V.take l v)
-              where l = product $ dimensions i
 
 
 instance MultiIndex i => FromList (Tensor i) where
