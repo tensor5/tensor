@@ -127,6 +127,16 @@ instance MultiIndex i => T.Tensor (Tensor i e) where
         where t = Tensor d $
                   V.generate (product d) (f . toMultiIndex . (unlinearize d))
               d = dimensions t
+    generateM f = mt
+        where mt = do
+                v <- V.generateM (product d)
+                     (f . toMultiIndex . (unlinearize d))
+                return (Tensor d v)
+              d = dimensions $ mUnd mt
+
+
+mUnd :: m a -> a
+mUnd _ = undefined
 
 
 instance Dimensions i => Dimensions (Tensor i e) where
