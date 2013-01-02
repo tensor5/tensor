@@ -19,7 +19,7 @@ Description:
 Library
   Build-Depends:   base == 4.*, ghc-prim, random, vector
   Build-Tools:     ghc >= 7.2.1
-  GHC-Options:     -Wall -O2
+  GHC-Options:     -Wall
   Exposed-Modules: Data.Cardinal
                    Data.Ordinal
                    Data.Tensor
