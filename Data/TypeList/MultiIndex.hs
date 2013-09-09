@@ -22,6 +22,7 @@ module Data.TypeList.MultiIndex
     ( Nil(..)
     , (:|:)(..)
 
+    , module Data.Ordinal
     , module Data.TypeList
 
     , MultiIndex(..)

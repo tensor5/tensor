@@ -7,7 +7,7 @@ module Data.Tensor.LinearAlgebra where
 
 import Data.Cardinal
 import Data.Tensor
-import Data.TypeList.MultiIndex hiding (head)
+import Data.TypeList.MultiIndex hiding (Succ, head)
 
 class VectorSpace v where
     zero :: Num e => v e

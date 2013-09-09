@@ -8,8 +8,8 @@ module Data.Tensor.Vector.Internal where
 
 import           Data.Cardinal
 import           Data.TypeList.MultiIndex hiding ((!!), head, drop, length, tail, take)
+import qualified Data.TypeList.MultiIndex as M
 import           Data.TypeList.MultiIndex.Internal
-import           Data.Ordinal
 import           Data.Tensor hiding (Tensor)
 import qualified Data.Tensor as T
 import qualified Data.Vector as V
@@ -669,14 +669,14 @@ addFreeVars k d n (v,vs) = (addFreeVarsSol d n v, addFreeVarsKer k n vs)
 
 
 bigMatr :: (Num e, Sum i i, Ordinal i)
-           => Matrix i i e -> Matrix (Data.Ordinal.Succ i) (i :*: i) e
+           => Matrix i i e -> Matrix (M.Succ i) (i :*: i) e
 bigMatr x = Tensor [n+1,n^(2::Int)] $
             V.concat (map content (take (n+1) $ iterate (.*. x) (asTypeOf unit x)))
     where n = head $ dimensions x
 
 
 gaussBigMatr :: (Eq e, Fractional e, Sum i i, Ordinal i) =>
-                Matrix i i e -> (Matrix (Data.Ordinal.Succ i) (i :*: i) e, Int)
+                Matrix i i e -> (Matrix (M.Succ i) (i :*: i) e, Int)
 gaussBigMatr m = let l = bigMatr m
                      (Tensor [d,e] _) = l in
                  cEch l d e 1 1 0
