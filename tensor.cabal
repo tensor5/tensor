@@ -6,7 +6,7 @@ License-File:   LICENSE
 Author:         Federico Squartini, Nicola Squartini
 Maintainer:     Nicola Squartini <tensor5@gmail.com>
 Stability:      experimental
-Homepage:	http://noaxiom.org/tensor
+Homepage:       http://noaxiom.org/tensor
 Synopsis:       A completely type-safe library for linear algebra
 Category:       Data, Math
 Build-Type:     Simple
