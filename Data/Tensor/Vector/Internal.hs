@@ -6,6 +6,7 @@
 
 module Data.Tensor.Vector.Internal where
 
+import           Control.Applicative
 import           Data.Cardinal
 import           Data.TypeList.MultiIndex hiding ((!!), head, drop, length, tail, take)
 import qualified Data.TypeList.MultiIndex as M
@@ -73,6 +74,11 @@ instance Show e => Show (Tensor i e) where
 
 instance Functor (Tensor i) where
     fmap f (Tensor is v) = Tensor is (fmap f v)
+
+
+instance MultiIndex i => Applicative (Tensor i) where
+    pure e = T.replicate e
+    (Tensor is f) <*> (Tensor _ v) = Tensor is (V.zipWith ($) f v)
 
 
 instance Zip (Tensor i) where
