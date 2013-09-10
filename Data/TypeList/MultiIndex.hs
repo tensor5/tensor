@@ -59,7 +59,7 @@ instance Cardinality Nil where
 
 instance (Cardinality e, Cardinality l, Cardinal ((Card e) :*: (Card l))) =>
     Cardinality (e :|: l) where
-        type Card (e :|: l) = (Card e) :*: (Card l) 
+        type Card (e :|: l) = (Card e) :*: (Card l)
 
 
 instance TypeList Nil where

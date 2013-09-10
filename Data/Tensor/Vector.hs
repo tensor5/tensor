@@ -4,20 +4,20 @@
 -- @'Data.Vector.Vector'@.
 
 module Data.Tensor.Vector
-    (Tensor,
-     Vector,
-     Matrix,
-     ColumnVector,
-     vector2ColumnVector,
-     columnVector2Vector,
-     RowVector,
-     vector2RowVector,
-     rowVector2Vector,
+    ( Tensor
+    , Vector
+    , Matrix
+    , ColumnVector
+    , vector2ColumnVector
+    , columnVector2Vector
+    , RowVector
+    , vector2RowVector
+    , rowVector2Vector
 
-     fromVector,
+    , fromVector
 
-     module Data.Tensor,
-     module Data.TypeList.MultiIndex
+    , module Data.Tensor
+    , module Data.TypeList.MultiIndex
 
     ) where
 

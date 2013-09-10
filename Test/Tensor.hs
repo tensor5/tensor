@@ -25,7 +25,7 @@ main = do
                                  polyEval x (altSign ((charPoly x) ++ [1])))
        , quickCheckResult ((\x -> zero == polyEval
                             (elemMap toRational x :: Matrix Two Two Rational)
-                            (minPoly 
+                            (minPoly
                              (elemMap toRational x :: Matrix Two Two Rational)
                              ++ [1])
                            ) :: (Matrix Two Two Float -> Bool))
@@ -33,7 +33,7 @@ main = do
                                  polyEval x (altSign ((charPoly x) ++ [1])))
        , quickCheckResult ((\x -> zero == polyEval
                             (elemMap toRational x :: Matrix Three Three Rational)
-                            (minPoly 
+                            (minPoly
                              (elemMap toRational x :: Matrix Three Three Rational)
                              ++ [1])
                            ) :: (Matrix Three Three Float -> Bool))
@@ -41,7 +41,7 @@ main = do
                                  polyEval x (altSign ((charPoly x) ++ [1])))
        , quickCheckResult ((\x -> zero == polyEval
                             (elemMap toRational x :: Matrix Four Four Rational)
-                            (minPoly 
+                            (minPoly
                              (elemMap toRational x :: Matrix Four Four Rational)
                              ++ [1])
                            ) :: (Matrix Four Four Float -> Bool))
@@ -49,7 +49,7 @@ main = do
                                  polyEval x (altSign ((charPoly x) ++ [1])))
        , quickCheckResult ((\x -> zero == polyEval
                             (elemMap toRational x :: Matrix Five Five Rational)
-                            (minPoly 
+                            (minPoly
                              (elemMap toRational x :: Matrix Five Five Rational)
                              ++ [1])
                            ) :: (Matrix Five Five Float -> Bool))
