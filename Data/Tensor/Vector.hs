@@ -16,10 +16,12 @@ module Data.Tensor.Vector
 
      fromVector,
 
-     module Data.Tensor
+     module Data.Tensor,
+     module Data.TypeList.MultiIndex
 
     ) where
 
 
 import Data.Tensor hiding (Tensor)
 import Data.Tensor.Vector.Internal
+import Data.TypeList.MultiIndex

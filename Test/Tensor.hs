@@ -3,7 +3,6 @@ module Main where
 import Data.Ordinal
 import Data.Tensor.LinearAlgebra hiding (Matrix)
 import Data.Tensor.Vector
-import Data.TypeList.MultiIndex
 import Prelude hiding (replicate)
 import System.Exit
 import System.Random
