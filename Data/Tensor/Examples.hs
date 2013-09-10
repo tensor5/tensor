@@ -43,9 +43,10 @@ faster. More backends (e.g. one based on
 <http://hackage.haskell.org/package/repa>) are planned for future
 releases.
 
-Here is a usage example:
+Here is a usage example (start @ghci@ with the option
+@-XTypeOperators@):
 
->>> :m Data.Tensor.Vector
+>>> import Data.Tensor.Vector
 >>> fromList [2,3,5,1,3,6,0,5,4,2,1,3] :: Tensor (Four :|: Three :|: Nil) Int
 [[2,3,5],[1,3,6],[0,5,4],[2,1,3]]
 
@@ -93,7 +94,8 @@ type inference, we could simply write
 And now a couple of examples of algebraic operations (requires adding
 @"Data.Tensor.LinearAlgebra"@ to the import list):
 
->>> :m Data.Tensor.Vector Data.Tensor.LinearAlgebra
+>>> import Data.Tensor.Vector
+>>> import Data.Tensor.LinearAlgebra hiding (Matrix)
 >>> let a = fromList [2,3,5,1,3,6,0,5,4,2,1,3] :: Matrix Four Three Int
 >>> let b = fromList [7,3,-6] :: Vector Three Int
 >>> a .*. b
