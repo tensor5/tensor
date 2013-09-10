@@ -81,10 +81,6 @@ instance MultiIndex i => Applicative (Tensor i) where
     (Tensor is f) <*> (Tensor _ v) = Tensor is (V.zipWith ($) f v)
 
 
-instance Zip (Tensor i) where
-    zipWith f (Tensor d x) (Tensor _ y) = Tensor d $ V.zipWith f x y
-
-
 fromVector :: MultiIndex i => V.Vector e -> (Tensor i e)
 fromVector x = t
     where
@@ -333,7 +329,7 @@ unsafeMatrixColSub j1 a j2 (Tensor ds x) = Tensor ds $ V.generate (d*e) cs
 instance MultiIndex i => VectorSpace (Tensor i) where
     zero = T.replicate 0
     a *. t = fmap (* a) t
-    (.+.) = T.zipWith (+)
+    (.+.) = liftA2 (+)
 
 
 instance (Num e, Cardinal n, MultiIndex i, MultiIndex j, JoinList n i j) =>

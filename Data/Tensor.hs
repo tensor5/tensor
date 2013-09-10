@@ -56,10 +56,6 @@ class Transpose t where
     transpose :: t -> TransposeSpace t
 
 
-class Zip t where
-    zipWith :: (a -> b -> c) -> t a -> t b -> t c
-
-
 -- | Slices the @'Tensor'@ @t@ by dropping @i@ at the beginning of its @'Index'@
 -- and @j@ at the end. The result has type @'Slice' i j t@.
 class Sliceable i j t where
