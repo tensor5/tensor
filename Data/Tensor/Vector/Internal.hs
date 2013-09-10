@@ -28,7 +28,7 @@ data Tensor i e = Tensor
 type Vector n = Tensor (n :|: Nil)
 
 
-type Matrix m n = Tensor (m :|: (n :|: Nil))
+type Matrix m n = Tensor (m :|: n :|: Nil)
 
 
 type ColumnVector n = Matrix n One

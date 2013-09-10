@@ -52,6 +52,7 @@ data Nil = Nil
 data a :|: b = a :|: b
                 deriving (Eq, G.Generic)
 
+infixr 9 :|:
 
 instance Cardinality Nil where
     type Card Nil = C1

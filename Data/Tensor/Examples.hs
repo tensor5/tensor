@@ -44,7 +44,7 @@ provided in future releases.
 Here is a usage example:
 
 >>> :m Data.Tensor.Vector
->>> fromList [2,3,5,1,3,6,0,5,4,2,1,3] :: Tensor (Four :|: (Three :|: Nil)) Int
+>>> fromList [2,3,5,1,3,6,0,5,4,2,1,3] :: Tensor (Four :|: Three :|: Nil) Int
 [[2,3,5],[1,3,6],[0,5,4],[2,1,3]]
 
 The above defines a tensor with 4 rows and 3 columns (a matrix) and
@@ -74,7 +74,7 @@ as its second argument:
 
 >>> let a = fromList [2,3,5,1,3,6,0,5,4,2,1,3] :: Matrix Four Three Int
 >>> let b = fromList [7,3,-6] :: Vector Three Int
->>> a ! (toMultiIndex [1,3] :: (Four :|: (Three :|: Nil)))
+>>> a ! (toMultiIndex [1,3] :: (Four :|: Three :|: Nil))
 5
 >>> b ! (toMultiIndex [2] :: (Three :|: Nil))
 3
