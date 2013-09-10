@@ -32,14 +32,16 @@ details.
 [@'Data.Tensor.Tensor'@] It is an assignment of elements to each
 element of its @'Data.TypeList.MultiIndex.MultiIndex'@.
 
-Objects like vectors and matrices are special cases of tensors.  Most
-of the functions to manipulate tensors are grouped into type classes.
-This allow the possibility of having different internal
-representations (backends) of a tensor, and act on these with the same
-functions. At the moment we only provide one backend based on
-<http://hackage.haskell.org/package/vector>, which is accessible by
-importing the module "Data.Tensor.Vector". More backends will be
-provided in future releases.
+Objects like vectors and matrices are special cases of tensors.  Most of
+the functions to manipulate tensors are grouped into type classes.  This
+allow the possibility of having different internal representations
+(backends) of a tensor, and act on these with the same functions. At the
+moment we provide two backends: one in "Data.Tensor.Pure" (not complete)
+that uses a recursive definition, and another in "Data.Tensor.Vector"
+that is based on <http://hackage.haskell.org/package/vector> and is
+faster. More backends (e.g. one based on
+<http://hackage.haskell.org/package/repa>) are planned for future
+releases.
 
 Here is a usage example:
 
