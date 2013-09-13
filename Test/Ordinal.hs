@@ -46,13 +46,13 @@ main = do
                                 :: Ten -> Bool)
         , quickCheckResult ((maxBound :: Ten) == toOrdinal (10 :: Int))
         ]
-  case (checkRes cs) of
-    True -> exitSuccess
-    False -> exitFailure
+  if checkRes cs
+    then exitSuccess
+    else exitFailure
 
 
 checkRes :: [Result] -> Bool
 checkRes = all $ \x -> case x of
-                          Success _ _ _ -> True
+                          Success{} -> True
                           _ -> False
 

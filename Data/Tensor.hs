@@ -21,11 +21,11 @@ class Tensor t where
 -- | Generates a @'Tensor'@ consisting of the same @'Elem'@ent
 -- repeated.
 replicate :: Tensor t => Elem t -> t
-replicate e = generate (\_ -> e)
+replicate e = generate (const e)
 
 
 replicateM :: (Monad m, Tensor t) => m (Elem t) -> m t
-replicateM act = generateM (\_ -> act)
+replicateM act = generateM (const act)
 
 
 -- | @'elemMap' f t@ applies @f@ to every @'Elem'@ent of @t@.

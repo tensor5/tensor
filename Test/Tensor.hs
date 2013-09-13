@@ -18,11 +18,11 @@ main :: IO ()
 main = do
   cs <- sequence
        [ quickCheckResult (\x -> (x :: Matrix Two Three Int) ==
-                                 (transpose $ transpose x))
+                                 transpose (transpose x))
        , quickCheckResult (\x -> (zero :: Matrix One One Int) ==
-                                 polyEval x (altSign ((charPoly x) ++ [1])))
+                                 polyEval x (altSign (charPoly x ++ [1])))
        , quickCheckResult (\x -> (zero :: Matrix Two Two Int) ==
-                                 polyEval x (altSign ((charPoly x) ++ [1])))
+                                 polyEval x (altSign (charPoly x ++ [1])))
        , quickCheckResult ((\x -> zero == polyEval
                             (elemMap toRational x :: Matrix Two Two Rational)
                             (minPoly
@@ -30,7 +30,7 @@ main = do
                              ++ [1])
                            ) :: (Matrix Two Two Float -> Bool))
        , quickCheckResult (\x -> (zero :: Matrix Three Three Int) ==
-                                 polyEval x (altSign ((charPoly x) ++ [1])))
+                                 polyEval x (altSign (charPoly x ++ [1])))
        , quickCheckResult ((\x -> zero == polyEval
                             (elemMap toRational x :: Matrix Three Three Rational)
                             (minPoly
@@ -38,7 +38,7 @@ main = do
                              ++ [1])
                            ) :: (Matrix Three Three Float -> Bool))
        , quickCheckResult (\x -> (zero :: Matrix Four Four Int) ==
-                                 polyEval x (altSign ((charPoly x) ++ [1])))
+                                 polyEval x (altSign (charPoly x ++ [1])))
        , quickCheckResult ((\x -> zero == polyEval
                             (elemMap toRational x :: Matrix Four Four Rational)
                             (minPoly
@@ -46,7 +46,7 @@ main = do
                              ++ [1])
                            ) :: (Matrix Four Four Float -> Bool))
        , quickCheckResult (\x -> (zero :: Matrix Five Five Int) ==
-                                 polyEval x (altSign ((charPoly x) ++ [1])))
+                                 polyEval x (altSign (charPoly x ++ [1])))
        , quickCheckResult ((\x -> zero == polyEval
                             (elemMap toRational x :: Matrix Five Five Rational)
                             (minPoly
@@ -54,9 +54,9 @@ main = do
                              ++ [1])
                            ) :: (Matrix Five Five Float -> Bool))
        ]
-  case (checkRes cs) of
-    True -> exitSuccess
-    False -> exitFailure
+  if checkRes cs
+    then exitSuccess
+    else exitFailure
 
 
 altSign :: Num a => [a] -> [a]
@@ -64,11 +64,11 @@ altSign = leave
     where leave [] = []
           leave (x:xs) = x : change xs
           change [] = []
-          change (x:xs) = (negate x) : leave xs
+          change (x:xs) = negate x : leave xs
 
 
 checkRes :: [Result] -> Bool
 checkRes = all $ \x -> case x of
-                          Success _ _ _ -> True
+                          Success{} -> True
                           _ -> False
 

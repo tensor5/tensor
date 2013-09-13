@@ -51,17 +51,17 @@ class (Tensor t, (Index t) ~ (i :|: (j :|: Nil))) =>
         -- | Switch two rows.
         rowSwitch :: i -> i -> t -> t
         -- | Multiply a row by a number.
-        rowMult :: (Num e, (Elem t) ~ e) => i -> (Elem t) -> t -> t
+        rowMult :: (Num e, (Elem t) ~ e) => i -> Elem t -> t -> t
         -- | @'rowAdd' i1 a i2 t@ adds @a@ times the row @i2@ to the
         -- row @i1@ ot @t@.
-        rowAdd :: (Num e, (Elem t) ~ e) => i -> (Elem t) -> i -> t -> t
+        rowAdd :: (Num e, (Elem t) ~ e) => i -> Elem t -> i -> t -> t
         -- | Switch two columns.
         colSwitch :: j -> j -> t -> t
         -- | Multiply a column by a number.
-        colMult :: (Num e, (Elem t) ~ e) => j -> (Elem t) -> t -> t
+        colMult :: (Num e, (Elem t) ~ e) => j -> Elem t -> t -> t
         -- | @'colAdd' j1 a j2 t@ adds @a@ times the column @j2@ to
         -- the column @j1@ ot @t@.
-        colAdd :: (Num e, (Elem t) ~ e) => j -> (Elem t) -> j -> t -> t
+        colAdd :: (Num e, (Elem t) ~ e) => j -> Elem t -> j -> t -> t
         -- | Reduced row echelon form of the matrix.
         rowEchelonForm :: (Eq e, Fractional e, (Elem t) ~ e) => t -> t
 

@@ -103,7 +103,7 @@ instance Cardinal a => Sum a Zero where
     _ <+> _ = undefined
 
 instance (Cardinal a, Cardinal b, Sum a b) => Sum a (Succ b) where
-    type a :+: (Succ b) = Succ (a :+: b)
+    type a :+: Succ b = Succ (a :+: b)
     _ <+> _ = undefined
 
 
@@ -112,7 +112,7 @@ instance Cardinal a => Prod a Zero where
     _ <*> _ = undefined
 
 instance (Cardinal a, Prod a b) => Prod a (Succ b) where
-    type a :*: (Succ b) = a :+: (a :*: b)
+    type a :*: Succ b = a :+: (a :*: b)
     _ <*> _ = undefined
 
 
@@ -132,8 +132,8 @@ instance GCardinality (f p) => GCardinality (M1 i c f p) where
     type GCard (M1 i c f p) = GCard (f p)
 
 instance (GCardinality (f p), GCardinality (g p)) => GCardinality ((f G.:+: g) p) where
-    type GCard ((f G.:+: g) p) = (GCard (f p)) :+: (GCard (g p))
+    type GCard ((f G.:+: g) p) = GCard (f p) :+: GCard (g p)
 
 instance (GCardinality (f p), GCardinality (g p)) => GCardinality ((f G.:*: g) p) where
-    type GCard ((f G.:*: g) p) = (GCard (f p)) :*: (GCard (g p))
+    type GCard ((f G.:*: g) p) = GCard (f p) :*: GCard (g p)
 

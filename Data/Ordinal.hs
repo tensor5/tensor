@@ -98,7 +98,7 @@ type Ten = Succ Nine
 
 instance (Bounded n) => Bounded (Succ n) where
     minBound = First
-    maxBound = Succ (maxBound)
+    maxBound = Succ maxBound
 
 
 instance (Ord n) => Ord (Succ n) where
@@ -118,7 +118,7 @@ instance (Bounded n, Ordinal n) => Random (Succ n) where
     randomR (l,h) g =
         let (r,g') = randomR (fromOrdinal l :: Integer, fromOrdinal h) g
         in (toOrdinal r, g')
-    random g = randomR (minBound,maxBound) g
+    random = randomR (minBound,maxBound)
 
 instance (Bounded n, Enum n, Ordinal n) => Enum (Succ n) where
     succ First = Succ minBound
@@ -142,7 +142,7 @@ instance Functor Succ where
 instance Monad Succ where
     First >>= _ = First
     (Succ x) >>= f = f x
-    return x = Succ x
+    return = Succ
 
 
 instance Cardinality One where
@@ -164,7 +164,7 @@ instance (Ordinal m) => Sum m One where
 
 instance (Ordinal m, Ordinal n, Ordinal (m :+: n), Sum m n) =>
     Sum m (Succ n) where
-        type m :+: (Succ n) = Succ (m :+: n)
+        type m :+: Succ n = Succ (m :+: n)
         x <+> First = toOrdinal (1 + fromOrdinal x :: Integer)
         x <+> (Succ y) = Succ (x <+> y)
 
@@ -175,7 +175,7 @@ instance (Ordinal m) => Prod m One where
 
 instance (Ordinal m, Ordinal n, Prod m n, Sum m (m :*: n), Ordinal (m :+: (m :*: n)))
     => Prod m (Succ n) where
-        type m :*: (Succ n) = m :+: (m :*: n)
+        type m :*: Succ n = m :+: (m :*: n)
         x <*> First = toOrdinal (fromOrdinal x :: Integer)
         x <*> (Succ y) = x <+> (x <*> y)
 

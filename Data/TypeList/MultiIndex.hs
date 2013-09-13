@@ -57,9 +57,9 @@ infixr 9 :|:
 instance Cardinality Nil where
     type Card Nil = C1
 
-instance (Cardinality e, Cardinality l, Cardinal ((Card e) :*: (Card l))) =>
+instance (Cardinality e, Cardinality l, Cardinal (Card e :*: Card l)) =>
     Cardinality (e :|: l) where
-        type Card (e :|: l) = (Card e) :*: (Card l)
+        type Card (e :|: l) = Card e :*: Card l
 
 
 instance TypeList Nil where
@@ -95,8 +95,8 @@ instance TakeList Zero l => TakeList Zero (e :|: l) where
     take _ _ = Nil
 
 instance TakeList n l => TakeList (C.Succ n) (e :|: l) where
-    type Take (C.Succ n) (e :|: l) = e :|: (Take n l)
-    take x (e :|: l) = e :|: (take (p x) l)
+    type Take (C.Succ n) (e :|: l) = e :|: Take n l
+    take x (e :|: l) = e :|: take (p x) l
         where p :: C.Succ n -> n
               p _ = undefined
 
@@ -149,8 +149,8 @@ instance Show Nil where
     show x = show (fromMultiIndex x :: [Integer])
 
 instance (Ordinal i, MultiIndex is) => MultiIndex (i :|: is) where
-    fromMultiIndex (x :|: y) = (fromOrdinal x):(fromMultiIndex y)
-    toMultiIndex (x:xs) = (toOrdinal x) :|: (toMultiIndex xs)
+    fromMultiIndex (x :|: y) = fromOrdinal x : fromMultiIndex y
+    toMultiIndex (x:xs) = toOrdinal x :|: toMultiIndex xs
     toMultiIndex [] = error "(toMultiIndex x): list too short"
 
 instance (Ordinal i, MultiIndex is) => Show (i :|: is) where
@@ -175,7 +175,7 @@ instance Dimensions Nil where
 
 instance (Ordinal i, Dimensions is) => Dimensions (i :|: is) where
     dimensions z = d (asTypeOf (undefined:|:undefined) z)
-        where d (x :|: y) = (card x):(dimensions y)
+        where d (x :|: y) = card x : dimensions y
 
 
 class (Cardinal n, MultiIndex is, MultiIndex js) =>

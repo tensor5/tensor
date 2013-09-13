@@ -46,11 +46,11 @@ instance HeadTail l => Component l Zero where
     partialMap _ f l = f (head l) .|. tail l
 
 instance (HeadTail l, Component (Tail l) n) => Component l (Succ n) where
-    type l :!!: (Succ n) = (Tail l) :!!: n
-    (!!) l n = (tail l) !! (p n)
+    type l :!!: Succ n = Tail l :!!: n
+    (!!) l n = tail l !! p n
         where p :: Succ n -> n
               p _ = undefined
-    partialMap n f l = (head l) .|. partialMap (p n) f (tail l)
+    partialMap n f l = head l .|. partialMap (p n) f (tail l)
         where p :: Succ n -> n
               p _ = undefined
 
@@ -102,7 +102,7 @@ instance (ReverseList (Drop n (Reverse l)),
           DropList n l',
           Reverse (Take n (Reverse l)) ~ Take n l')
     => JoinList n l l' where
-        type Join n l l' = (Reverse (Drop n (Reverse l))) :++: Drop n l'
+        type Join n l l' = Reverse (Drop n (Reverse l)) :++: Drop n l'
         join n l l' = reverse (drop n (reverse l)) <++> drop n l'
 
 
