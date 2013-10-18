@@ -4,10 +4,21 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | The Module @"Data.TypeList"@ is a collection of classes to
--- manipulate lists of types, a.k.a. heterogeneous lists.  Check the
--- module @"Data.TypeList.MultiIndex"@ for a concrete implementation
--- of @'TypeList'@.
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  $Header$
+-- Copyright   :  © 2012-2013 Nicola Squartini
+-- License     :  GPL-3
+--
+-- Maintainer  :  Nicola Squartini <tensor5@gmail.com>
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- The Module @"Data.TypeList"@ is a collection of classes to manipulate lists
+-- of types, a.k.a. heterogeneous lists.  Check the module
+-- @"Data.TypeList.MultiIndex"@ for a concrete implementation of @'TypeList'@.
+--
+--------------------------------------------------------------------------------
 
 module Data.TypeList where
 

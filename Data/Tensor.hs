@@ -1,6 +1,18 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  $Header$
+-- Copyright   :  © 2012-2013 Nicola Squartini
+-- License     :  GPL-3
+--
+-- Maintainer  :  Nicola Squartini <tensor5@gmail.com>
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+--------------------------------------------------------------------------------
+
 module Data.Tensor where
 
 

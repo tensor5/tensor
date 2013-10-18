@@ -1,4 +1,11 @@
 {-|
+Module      :  $Header$
+Copyright   :  © 2012-2013 Nicola Squartini
+License     :  GPL-3
+
+Maintainer  :  Nicola Squartini <tensor5@gmail.com>
+Stability   :  experimental
+Portability :  portable
 
 This library defines data types and classes for fixed dimension
 vectors and tensors. The main objects are:

@@ -5,10 +5,20 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | We define the a multidimensional array of indices called
--- @'MultiIndex'@. The canonical implementation of a @'MultiIndex'@ is
--- an heterogeneous list of @'Ordinal'@s.  Below we illustrate some
--- example of @'MultiIndex'@ types and the elements they contain.
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  $Header$
+-- Copyright   :  © 2012-2013 Nicola Squartini
+-- License     :  GPL-3
+--
+-- Maintainer  :  Nicola Squartini <tensor5@gmail.com>
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- We define the a multidimensional array of indices called @'MultiIndex'@. The
+-- canonical implementation of a @'MultiIndex'@ is an heterogeneous list of
+-- @'Ordinal'@s.  Below we illustrate some example of @'MultiIndex'@ types and
+-- the elements they contain.
 --
 -- @'Three' ':|:' 'Nil'@ = {(1),(2),(3)}
 --
@@ -17,6 +27,8 @@
 --
 -- @'Three' ':|:' ('Two' ':|:' ('Two' ':|:' 'Nil'))@ =
 -- {(1,1,1),(1,1,2),(1,2,1),(1,2,2),(2,1,1),(2,1,2),(2,2,1),(2,2,2),(3,1,1),(3,1,2),(3,2,1),(3,2,2)}
+--
+--------------------------------------------------------------------------------
 
 module Data.TypeList.MultiIndex
     ( Nil(..)

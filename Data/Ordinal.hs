@@ -5,10 +5,19 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | In this module we provide a way to canonically define a totally
--- ordered set with a given number of elements.  These types have a
--- custom @'Show'@ instances so that their elements are displayed with
--- usual decimal number.
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  $Header$
+-- Copyright   :  © 2012-2013 Nicola Squartini
+-- License     :  GPL-3
+--
+-- Maintainer  :  Nicola Squartini <tensor5@gmail.com>
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- In this module we provide a way to canonically define a totally ordered set
+-- with a given number of elements.  These types have a custom @'Show'@
+-- instances so that their elements are displayed with usual decimal number.
 --
 --
 -- @'One'@ = {'One'} = {1}
@@ -19,6 +28,9 @@
 -- 'Succ' 'One'@} = {1,2,3}
 --
 -- ...
+--
+--------------------------------------------------------------------------------
+
 module Data.Ordinal
     ( One(..)
     , Succ(..)

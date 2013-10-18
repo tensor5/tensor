@@ -3,6 +3,21 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  $Header$
+-- Copyright   :  © 2013 Nicola Squartini
+-- License     :  GPL-3
+--
+-- Maintainer  :  Nicola Squartini <tensor5@gmail.com>
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- Implementation of Tensor data type that uses recursively defined type
+-- families.
+--
+--------------------------------------------------------------------------------
+
 module Data.Tensor.Pure
     ( Tensor(..)
     , Vector
