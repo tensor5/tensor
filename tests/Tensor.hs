@@ -1,12 +1,12 @@
 module Main where
 
-import Data.Ordinal
-import Data.Tensor.LinearAlgebra hiding (Matrix)
-import Data.Tensor.Vector
-import Prelude hiding (replicate)
-import System.Exit
-import System.Random
-import Test.QuickCheck
+import           Data.Ordinal
+import           Data.Tensor.LinearAlgebra hiding (Matrix)
+import           Data.Tensor.Vector
+import           Prelude                   hiding (replicate)
+import           System.Exit
+import           System.Random
+import           Test.QuickCheck
 
 --instance (Bounded e, MultiIndex i, Random e) => Arbitrary (Tensor i e) where
 --    arbitrary = arbitraryBoundedRandom

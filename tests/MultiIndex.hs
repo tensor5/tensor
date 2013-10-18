@@ -2,12 +2,12 @@
 
 module Main where
 
-import Data.Ordinal
-import Data.TypeList.MultiIndex
-import Prelude hiding (reverse)
-import System.Exit
-import System.Random
-import Test.QuickCheck
+import           Data.Ordinal
+import           Data.TypeList.MultiIndex
+import           Prelude                  hiding (reverse)
+import           System.Exit
+import           System.Random
+import           Test.QuickCheck
 
 instance Arbitrary Nil where
     arbitrary = elements [Nil]

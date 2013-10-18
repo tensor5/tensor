@@ -1,8 +1,8 @@
 module Main where
 
-import Data.Ordinal
-import System.Exit
-import Test.QuickCheck
+import           Data.Ordinal
+import           System.Exit
+import           Test.QuickCheck
 
 instance Arbitrary One where
     arbitrary = elements [One]
