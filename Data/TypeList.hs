@@ -1,8 +1,8 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -22,8 +22,8 @@
 
 module Data.TypeList where
 
-import Data.Cardinal
-import Prelude hiding ((!!), drop, head, reverse, tail)
+import           Data.Cardinal
+import           Prelude       hiding (drop, head, reverse, tail, (!!))
 
 
 -- | Every @'TypeList'@ has a @'Length'@. The @'Length'@ is actually a

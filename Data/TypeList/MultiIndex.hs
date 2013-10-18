@@ -1,9 +1,9 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -44,13 +44,13 @@ module Data.TypeList.MultiIndex
 
     ) where
 
-import           Data.Cardinal hiding (Succ)
-import qualified Data.Cardinal as C
+import           Data.Cardinal                     hiding (Succ)
+import qualified Data.Cardinal                     as C
 import           Data.Ordinal
 import           Data.TypeList
 import           Data.TypeList.MultiIndex.Internal
-import qualified GHC.Generics as G
-import           Prelude hiding (drop, take)
+import qualified GHC.Generics                      as G
+import           Prelude                           hiding (drop, take)
 import           System.Random
 
 

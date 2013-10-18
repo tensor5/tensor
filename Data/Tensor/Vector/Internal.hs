@@ -1,26 +1,27 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 module Data.Tensor.Vector.Internal where
 
 import           Control.Applicative
 import           Data.Cardinal
-import           Data.TypeList.MultiIndex hiding ((!!), head, drop, length, tail, take)
-import qualified Data.TypeList.MultiIndex as M
+import           Data.Tensor                       hiding (Tensor)
+import qualified Data.Tensor                       as T
+import           Data.Tensor.LinearAlgebra         hiding (Matrix)
+import qualified Data.Tensor.LinearAlgebra         as LA
+import           Data.TypeList.MultiIndex          hiding (drop, head, length,
+                                                    tail, take, (!!))
+import qualified Data.TypeList.MultiIndex          as M
 import           Data.TypeList.MultiIndex.Internal
-import           Data.Tensor hiding (Tensor)
-import qualified Data.Tensor as T
-import qualified Data.Vector as V
-import           Data.Tensor.LinearAlgebra hiding (Matrix)
-import qualified Data.Tensor.LinearAlgebra as LA
-import           System.Random hiding (split)
+import qualified Data.Vector                       as V
+import           System.Random                     hiding (split)
 
 
 data Tensor i e = Tensor
-    { form :: [Int]
+    { form    :: [Int]
     , content :: V.Vector e
     } deriving Eq
 

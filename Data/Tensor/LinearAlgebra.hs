@@ -1,7 +1,7 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -17,9 +17,9 @@
 
 module Data.Tensor.LinearAlgebra where
 
-import Data.Cardinal
-import Data.Tensor
-import Data.TypeList.MultiIndex hiding (Succ, head)
+import           Data.Cardinal
+import           Data.Tensor
+import           Data.TypeList.MultiIndex hiding (Succ, head)
 
 class VectorSpace v where
     zero :: Num e => v e

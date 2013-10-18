@@ -1,9 +1,9 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -51,11 +51,11 @@ module Data.Ordinal
 
     ) where
 
-import           Data.Cardinal hiding (Succ)
-import qualified Data.Cardinal as C
-import           Data.Ord()
+import           Data.Cardinal    hiding (Succ)
+import qualified Data.Cardinal    as C
+import           Data.Ord         ()
 import           Data.TypeAlgebra
-import qualified GHC.Generics as G
+import qualified GHC.Generics     as G
 import           System.Random
 
 -- | A set with one element.

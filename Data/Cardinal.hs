@@ -1,11 +1,11 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE EmptyDataDecls        #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -45,8 +45,8 @@ module Data.Cardinal
     ) where
 
 import           Data.TypeAlgebra
-import           GHC.Generics hiding ((:+:), (:*:), C1)
-import qualified GHC.Generics as G
+import           GHC.Generics     hiding ((:*:), (:+:), C1)
+import qualified GHC.Generics     as G
 
 data Zero
     deriving Generic

@@ -33,6 +33,6 @@ module Data.Tensor.Vector
     ) where
 
 
-import Data.Tensor hiding (Tensor)
-import Data.Tensor.Vector.Internal
-import Data.TypeList.MultiIndex
+import           Data.Tensor                 hiding (Tensor)
+import           Data.Tensor.Vector.Internal
+import           Data.TypeList.MultiIndex

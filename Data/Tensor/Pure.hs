@@ -1,6 +1,6 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 --------------------------------------------------------------------------------
@@ -29,8 +29,8 @@ module Data.Tensor.Pure
     ) where
 
 import           Control.Applicative
-import           Data.Tensor hiding (Tensor)
-import qualified Data.Tensor as T (Tensor)
+import           Data.Tensor              hiding (Tensor)
+import qualified Data.Tensor              as T (Tensor)
 import           Data.TypeList.MultiIndex hiding ((<*>))
 
 
