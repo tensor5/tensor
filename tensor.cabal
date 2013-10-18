@@ -3,6 +3,7 @@ Version:        0.3.0
 Cabal-Version:  >= 1.9.2
 License:        GPL-3
 License-File:   LICENSE
+Copyright:      © 2012-2013 Nicola Squartini
 Author:         Federico Squartini, Nicola Squartini
 Maintainer:     Nicola Squartini <tensor5@gmail.com>
 Stability:      experimental
