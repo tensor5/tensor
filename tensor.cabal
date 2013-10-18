@@ -37,21 +37,21 @@ Library
 Test-Suite test-ordinal
   Type:           exitcode-stdio-1.0
   Main-Is:        Ordinal.hs
-  Hs-Source-Dirs: Test
+  Hs-Source-Dirs: tests
   Build-Depends:  base == 4.*, QuickCheck, tensor
   GHC-Options:    -Wall
 
 Test-Suite test-multiindex
   Type:           exitcode-stdio-1.0
   Main-Is:        MultiIndex.hs
-  Hs-Source-Dirs: Test
+  Hs-Source-Dirs: tests
   Build-Depends:  base == 4.*, QuickCheck, random, tensor
   GHC-Options:    -Wall
 
 Test-Suite test-tensor
   Type:           exitcode-stdio-1.0
   Main-Is:        Tensor.hs
-  Hs-Source-Dirs: Test
+  Hs-Source-Dirs: tests
   Build-Depends:  base == 4.*, QuickCheck, random, tensor
   GHC-Options:    -Wall
 
