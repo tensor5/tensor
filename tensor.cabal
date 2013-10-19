@@ -33,6 +33,7 @@ Library
                    Data.TypeList.MultiIndex
   Other-modules:   Data.Tensor.Vector.Internal
                    Data.TypeList.MultiIndex.Internal
+  Hs-Source-Dirs:  src
 
 Test-Suite test-ordinal
   Type:           exitcode-stdio-1.0
