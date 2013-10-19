@@ -17,6 +17,8 @@ Description:
   vectors and tensors. See the homepage <http://noaxiom.org/tensor>
   for more details, or @"Data.Tensor.Examples"@ for a short tutorial.
 
+Extra-Source-Files: CHANGELOG
+
 Library
   Build-Depends:   base == 4.*, ghc-prim, random, vector
   Build-Tools:     ghc >= 7.2.1
