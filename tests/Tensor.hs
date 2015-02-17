@@ -1,74 +1,50 @@
-module Main where
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeOperators     #-}
 
-import           Data.Ordinal
-import           Data.Tensor.LinearAlgebra hiding (Matrix)
-import           Data.Tensor.Vector
-import           Prelude                   hiding (replicate)
-import           System.Exit
-import           System.Random
-import           Test.QuickCheck
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
---instance (Bounded e, MultiIndex i, Random e) => Arbitrary (Tensor i e) where
---    arbitrary = arbitraryBoundedRandom
+module Tensor ( tests ) where
 
-instance (MultiIndex i, Num e, Random e) => Arbitrary (Tensor i e) where
-    arbitrary = choose (replicate (negate 100), replicate 100)
+import           Control.Applicative               (liftA2, (<$>))
+import           Distribution.TestSuite.QuickCheck
+import           Prelude.Unicode
+import           Test.QuickCheck                   (Arbitrary (arbitrary))
 
-main :: IO ()
-main = do
-  cs <- sequence
-       [ quickCheckResult (\x -> (x :: Matrix Two Three Int) ==
-                                 transpose (transpose x))
-       , quickCheckResult (\x -> (zero :: Matrix One One Int) ==
-                                 polyEval x (altSign (charPoly x ++ [1])))
-       , quickCheckResult (\x -> (zero :: Matrix Two Two Int) ==
-                                 polyEval x (altSign (charPoly x ++ [1])))
-       , quickCheckResult ((\x -> zero == polyEval
-                            (elemMap toRational x :: Matrix Two Two Rational)
-                            (minPoly
-                             (elemMap toRational x :: Matrix Two Two Rational)
-                             ++ [1])
-                           ) :: (Matrix Two Two Float -> Bool))
-       , quickCheckResult (\x -> (zero :: Matrix Three Three Int) ==
-                                 polyEval x (altSign (charPoly x ++ [1])))
-       , quickCheckResult ((\x -> zero == polyEval
-                            (elemMap toRational x :: Matrix Three Three Rational)
-                            (minPoly
-                             (elemMap toRational x :: Matrix Three Three Rational)
-                             ++ [1])
-                           ) :: (Matrix Three Three Float -> Bool))
-       , quickCheckResult (\x -> (zero :: Matrix Four Four Int) ==
-                                 polyEval x (altSign (charPoly x ++ [1])))
-       , quickCheckResult ((\x -> zero == polyEval
-                            (elemMap toRational x :: Matrix Four Four Rational)
-                            (minPoly
-                             (elemMap toRational x :: Matrix Four Four Rational)
-                             ++ [1])
-                           ) :: (Matrix Four Four Float -> Bool))
-       , quickCheckResult (\x -> (zero :: Matrix Five Five Int) ==
-                                 polyEval x (altSign (charPoly x ++ [1])))
-       , quickCheckResult ((\x -> zero == polyEval
-                            (elemMap toRational x :: Matrix Five Five Rational)
-                            (minPoly
-                             (elemMap toRational x :: Matrix Five Five Rational)
-                             ++ [1])
-                           ) :: (Matrix Five Five Float -> Bool))
-       ]
-  if checkRes cs
-    then exitSuccess
-    else exitFailure
+import           Data.MultiIndex
+import           Data.Sliceable
+import           Data.Tensor
 
 
-altSign :: Num a => [a] -> [a]
-altSign = leave
-    where leave [] = []
-          leave (x:xs) = x : change xs
-          change [] = []
-          change (x:xs) = negate x : leave xs
+tests ∷ IO [Test]
+tests = return [appendTest, appendTest', sliceTest]
+
+appendTest ∷ Test
+appendTest = testGroup "Append and Split"
+             [ testProperty "2 3" (\x y → split (AddDim Point) (append (AddDim Point) (x ∷ Vector (S One) Int) (y ∷ Vector (S (S One)) Int)) ≡ (x,y))
+             , testProperty "2 3" (\x y → split (AddDim Point) (append (AddDim Point) (x ∷ Matrix (S One) (S (S One)) Int) (y ∷ Matrix (S (S One)) (S (S One)) Int)) ≡ (x,y))
+             ]
+
+appendTest' ∷ Test
+appendTest' = testGroup "Append and |:"
+              [ testProperty "[3] [2,3]" (\x y → append (AddDim Point) (t1 x) y ≡ (x ∷ Vector (S (S One)) Int) |: (y ∷ Matrix (S One) (S (S One)) Int))
+              ]
+
+sliceTest ∷ Test
+sliceTest = testGroup "Slice"
+            [ testProperty "[]" (\x → slice (x ∷ Tensor '[] Int) nilS ≡ x)
+            , testProperty "[2,3] [Nothing, Nothing]" (\x → slice (x ∷ Matrix (S One) (S (S One)) Int) (allCons $ allCons nilS) ≡ x)
+            ]
 
 
-checkRes :: [Result] -> Bool
-checkRes = all $ \x -> case x of
-                          Success{} -> True
-                          _ -> False
+instance Arbitrary e ⇒ Arbitrary (Tensor '[] e) where
+    arbitrary = t0 <$> arbitrary
 
+instance Arbitrary (Tensor is e) ⇒ Arbitrary (Tensor (One ': is) e) where
+    arbitrary = t1 <$> arbitrary
+
+instance ( Arbitrary (Tensor is e)
+         , Arbitrary (Tensor (i ': is) e)
+         ) ⇒ Arbitrary (Tensor (S i ': is) e) where
+    arbitrary = liftA2 (:|) arbitrary arbitrary

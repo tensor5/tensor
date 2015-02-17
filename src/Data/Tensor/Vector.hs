@@ -1,38 +1,477 @@
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE Trustworthy           #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances  #-}
+
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  $Header$
--- Copyright   :  © 2012-2013 Nicola Squartini
--- License     :  GPL-3
+-- Copyright   :  © 2012-2015 Nicola Squartini
+-- License     :  BSD3
 --
 -- Maintainer  :  Nicola Squartini <tensor5@gmail.com>
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
 -- This module define a datatype @'Tensor'@ which implements the classes and
--- methods defined in "Data.Tensor" and "Data.Tensor.LinearAlgebra". It is
--- represented internally as a @'Data.Vector.Vector'@.
+-- methods defined in "Data.Tensor", but is represented internally as a
+-- @'V.Vector'@, and is therefore faster and more memory efficient than the
+-- standard @'T.Tensor'@.
 --
 --------------------------------------------------------------------------------
 
 module Data.Tensor.Vector
-    ( Tensor
+    ( MultiIndex
+    , unMultiIndex
+
+    , Tensor
     , Vector
     , Matrix
     , ColumnVector
     , vector2ColumnVector
     , columnVector2Vector
     , RowVector
-    , vector2RowVector
-    , rowVector2Vector
 
-    , fromVector
+    , fromList
+--    , fromVector
 
+    , module Data.MultiIndex
+    , module Data.Sliceable
     , module Data.Tensor
-    , module Data.TypeList.MultiIndex
+
+    , Slicer
 
     ) where
 
+import           Control.Applicative
+import           Control.Arrow
+import           Control.DeepSeq
+import           Control.Exception   (throw)
+import           Control.Monad       (liftM)
+import           Data.Function       (on)
+import           Data.Maybe          (fromJust)
+import qualified Data.Vector         as V
+import           Data.Vector.Generic hiding (Vector, fromList, replicate,
+                                      toList, (++))
+import qualified Data.Vector.Generic as G
+import qualified Data.Vector.Unboxed as U
+import           Data.Word
+import           GHC.Exts            (IsList (..))
+import           Prelude             hiding (drop, head, init, length, null,
+                                      product, reverse, splitAt, tail, take,
+                                      zipWith)
+import qualified Prelude             as P
+import           Prelude.Unicode
+import           System.Random
 
-import           Data.Tensor                 hiding (Tensor)
-import           Data.Tensor.Vector.Internal
-import           Data.TypeList.MultiIndex
+import           Data.MultiIndex     hiding (MultiIndex, fromList, toList)
+import qualified Data.MultiIndex     as M
+import           Data.Sliceable      hiding (Slicer)
+import qualified Data.Sliceable      as S
+import           Data.Tensor         hiding (ColumnVector, Matrix, RowVector,
+                                      Slicer (..), Tensor, Vector)
+import qualified Data.Tensor         as T
+
+
+-- | An @'IsMultiIndex'@ type optimized for indexing @'Tensor'@. It is
+-- internally represented as a @'U.Vector'@ of @'Word'@s.
+newtype MultiIndex (is ∷ [PI]) = MultiIndex
+    { unMultiIndex ∷ U.Vector Word  -- ^ Yield the internal representation of
+                                    -- @'MultiIndex'@.
+    } deriving Eq
+
+instance Ord (MultiIndex '[i]) where
+    compare = compare `on` (head ∘ unMultiIndex)
+
+instance IsMultiIndex MultiIndex where
+    nil = MultiIndex G.empty
+    oneCons = MultiIndex ∘ cons 1 ∘ unMultiIndex
+    headSucc = MultiIndex ∘ succHead ∘ unMultiIndex
+    toMultiIndex = toM shape
+        where
+          toM ∷ Shape is → MultiIndex is → M.MultiIndex is
+          toM Point         = const Nil
+          toM (AddDim sh)   =
+              OneCons ∘ toM sh ∘ MultiIndex ∘ tail ∘ unMultiIndex
+          toM (AddLayer sh) =
+              headSucc ∘ toM sh ∘ MultiIndex ∘ predHead ∘ unMultiIndex
+    toList = P.map fromIntegral ∘ toList ∘ unMultiIndex
+
+predHead ∷ U.Vector Word → U.Vector Word
+predHead = imap (\i → if i ≡ 0 then pred else id)
+
+succHead ∷ U.Vector Word → U.Vector Word
+succHead = imap (\i → if i ≡ 0 then succ else id)
+
+
+-- | An @'IsTensor'@ type, internally represented as a @'V.Vector'@. It features
+-- O(1) @('T.!')@.
+data Tensor (is ∷ [PI]) e = Tensor
+    { form    ∷ U.Vector Word
+    , content ∷ V.Vector e
+    } deriving Eq
+
+
+-- | A vector.
+type Vector i = Tensor '[i]
+
+
+-- | A matrix.
+type Matrix i j = Tensor '[i, j]
+
+
+-- | A matrix with only one column.
+type ColumnVector n = Matrix n One
+
+-- | Transform a vector into a one-column matrix.
+vector2ColumnVector :: Vector n e -> ColumnVector n e
+vector2ColumnVector (Tensor ds x) = (Tensor (ds `snoc` 1) x)
+
+-- | Transform a one-column matrix into a vector.
+columnVector2Vector :: ColumnVector n e -> Vector n e
+columnVector2Vector (Tensor ds x) = (Tensor (init ds) x)
+
+
+-- | A matrix with only one row.
+type RowVector n = Matrix One n
+
+linearize ∷ U.Vector Word -- ^ Dimension array
+          → U.Vector Word -- ^ Index array
+          → Int
+linearize ds is = fromIntegral $ go ds is 0
+    where go es js acc =
+              if length js ≡ 0
+              then acc
+              else let t = tail es in
+                   go t (tail js) (acc + (head js - 1) ⋅ product t)
+
+unlinearize ∷ U.Vector Word -- ^ Dimension array
+            → Int           -- ^ Linearized position (starting from 0)
+            → U.Vector Word
+unlinearize ds i = go ds (fromIntegral i) G.empty
+    where go es j acc = if G.null es
+                        then acc
+                        else let t = tail es
+                                 (q,r) = quotRem j (product t)
+                             in go t r (acc `snoc` (q + 1))
+
+unsafeTensorGet :: Tensor i e -> U.Vector Word -> e
+unsafeTensorGet (Tensor ds x) = (G.!) x ∘ linearize ds
+
+unsafeTensorGen :: U.Vector Word -> (U.Vector Word -> e) -> Tensor i e
+unsafeTensorGen ds f =
+    Tensor ds $ G.generate (fromIntegral $ product ds) (f ∘ (unlinearize ds))
+
+-----------------------------------  Functor -----------------------------------
+
+instance Functor (Tensor is) where
+    fmap = T.map
+
+---------------------------------  Applicative ---------------------------------
+
+instance ShapeI is ⇒ Applicative (Tensor is) where
+    pure e = let r = fromList $ fromShape (shape ∷ Shape is)
+             in Tensor r $ G.replicate (fromIntegral $ product r) e
+    (<*>) = ap
+
+------------------------------------  Show  ------------------------------------
+
+instance Show e => Show (Tensor i e) where
+    showsPrec _ (Tensor ds v) =
+        let sd = reverse ds
+            l = length v
+            r = length ds
+        in if r ≡ 0
+           then shows $ v G.! 0
+           else showsT (toList sd) l (replicate r 1) 1 ∘
+                    (shows $ v G.! (l-1)) ∘
+                    (replicate r ']' ++)
+        where showsT sd l ys n =
+                  let (zs,k) = match sd ys
+                  in if n < l
+                     then showsT sd l zs (n+1) ∘
+                              (shows $  v G.! (l-n-1)) ∘
+                              (replicate k ']' ++) ∘
+                              (',':) ∘ (replicate k '[' ++)
+                     else (replicate k '[' ++)
+              match is js = match' is js [] 0
+                  where match' [] _ zs n = (zs,n)
+                        match' _ [] zs n = (zs,n)
+                        match' (x:xs) (y:ys) zs n
+                            | x ≡ y     = match' xs ys (zs ++ [1]) (n+1)
+                            | otherwise = (zs ++ ((y+1):ys),n)
+
+----------------------------------  IsTensor  ----------------------------------
+
+instance IsTensor Tensor where
+    type Index Tensor = MultiIndex
+    Tensor d u ! ix = u G.! linearize d (unMultiIndex ix)
+    t0 = Tensor G.empty ∘ singleton
+    unT0 = head ∘ content
+    t1 (Tensor d u) = Tensor (1 `cons` d) u
+    unT1 (Tensor d u) = Tensor (tail d) u
+    (Tensor _ u) |: (Tensor d v) = let h = head d
+                                       t = tail d
+                                   in Tensor (succ h `cons` t) (u G.++ v)
+    unCons (Tensor d u) = let t = tail d
+                              (v, w) = splitAt (fromIntegral $ product t) u
+                          in (Tensor t v, Tensor (pred (head d) `cons` t) w)
+    gen s f = let r = fromList $ fromShape s
+              in Tensor r $ G.generate (fromIntegral $ product r)
+                                       (f ∘ MultiIndex ∘ (unlinearize r))
+    genA s f = let r = fromList $ fromShape s
+               in Tensor r <$> generateA (fromIntegral $ product r)
+                                               (f ∘ MultiIndex ∘ (unlinearize r))
+        where generateA ∷ Applicative f ⇒ Int → (Int → f a) → f (V.Vector a)
+              generateA n g | n ≡ 0     = pure G.empty
+                            | otherwise = liftA2 cons (g 0)
+                                          (generateA (n-1) (g ∘ succ))
+    genM s f = do let r = fromList $ fromShape s
+                  Tensor r `liftM` G.generateM (fromIntegral $ product r)
+                                               (f ∘ MultiIndex ∘ (unlinearize r))
+    map f (Tensor d u) = Tensor d $ fmap f u
+    ap (Tensor _ f) (Tensor d u) = Tensor d (zipWith ($) f u)
+    concat (Tensor ds u) =
+        let h = head ds
+            t = tail ds
+            l = fromIntegral $ product t
+            j = h `cons` form (u G.! 0)
+        in Tensor t $ G.generate l (\x → Tensor j
+                                    $ G.concat
+                                    $ [ content (u G.! (x + k⋅l)) | k ← [0..pred (fromIntegral h)] ])
+    unConcat (Tensor ds u) =
+        let h = head es
+            l = fromIntegral (product ds ⋅ h)
+        in Tensor (h `cons` ds) $ G.generate l f
+        where f n = let (i, is) = quotRem n esl
+                    in Tensor t $ G.slice (i ⋅ tl) tl $ content (u G.! is)
+              es = form (u G.! 0)
+              esl = fromIntegral $ product es
+              t = tail es
+              tl = fromIntegral $ product t
+    Tensor ds u `at` ix =
+        let h = head ds
+            t = tail ds
+            l = fromIntegral $ product t
+            i = linearize t $ unMultiIndex ix
+        in Tensor (singleton h) $
+           G.generate (fromIntegral h) (\x → u G.! ((x ⋅ l) + i))
+    ix `ta` Tensor ds u = let t = tail ds
+                              i   = fromIntegral $ head $ unMultiIndex ix
+                              l   = fromIntegral $ product t
+                          in Tensor t $
+                             G.slice (i ⋅ l) l u
+
+-----------------------------------  Append  -----------------------------------
+
+instance ( ShapeI is
+         , ShapeI (i ': is)
+         ) ⇒ Append Tensor One (One ': is) (i ': is) (S i ': is) where
+    append _ (Tensor d x) (Tensor e y) =
+        Tensor (take i d G.++ f) (G.generate len gnr)
+            where f ∷ U.Vector Word
+                  f = (d G.! i + e G.! i) `cons` drop (succ i) d
+                  len, m, n, o, i ∷ Int
+                  len = fromIntegral $ product (take i d G.++ f)
+                  m = fromIntegral $ product $ drop i d
+                  n = fromIntegral $ product $ drop i e
+                  o = fromIntegral $ product f
+                  i = 0
+                  gnr k = let (q,r) = quotRem k o
+                          in if r < m
+                             then x G.! (q⋅m + r)
+                             else y G.! (q⋅n + r - m)
+    split sh t = (u1,u2)
+            where d1 ∷ Shape (One ': is)
+                  d1 = shape
+                  u1 = unsafeTensorGen (fromList $ fromShape d1) (unsafeTensorGet t)
+                  d2 ∷ Shape (i ': is)
+                  d2 = shape
+                  u2 = unsafeTensorGen (fromList $ fromShape d2) (unsafeTensorGet t ∘ f)
+                  f = let i = pred $ P.head $ fromShape sh in
+                      imap (\n → if n ≡ i then (+) (fromShape d1 !! i) else id)
+
+instance ( Append Tensor One (i ': is) (j ': is) (k ': is)
+         , ShapeI (i ': is)
+         , ShapeI (j ': is)
+         ) ⇒ Append Tensor One (S i ': is) (j ': is) (S k ': is) where
+    append _ (Tensor d x) (Tensor e y) =
+        Tensor (take i d G.++ f) (G.generate len gnr)
+            where f ∷ U.Vector Word
+                  f = (d G.! i + e G.! i) `cons` drop (succ i) d
+                  len, m, n, o, i ∷ Int
+                  len = fromIntegral $ product (take i d G.++ f)
+                  m = fromIntegral $ product $ drop i d
+                  n = fromIntegral $ product $ drop i e
+                  o = fromIntegral $ product f
+                  i = 0
+                  gnr k = let (q,r) = quotRem k o
+                          in if r < m
+                             then x G.! (q⋅m + r)
+                             else y G.! (q⋅n + r - m)
+    split sh t = (u1,u2)
+            where d1 ∷ Shape (S i ': is)
+                  d1 = shape
+                  u1 = unsafeTensorGen (fromList $ fromShape d1) (unsafeTensorGet t)
+                  d2 ∷ Shape (j ': is)
+                  d2 = shape
+                  u2 = unsafeTensorGen (fromList $ fromShape d2) (unsafeTensorGet t ∘ f)
+                  f = let i = pred $ P.head $ fromShape sh in
+                      imap (\n → if n ≡ i then (+) (fromShape d1 !! i) else id)
+
+instance ( Append Tensor n is js ks
+         , ShapeI (i ': is)
+         , ShapeI (i ': js)
+         ) ⇒ Append Tensor ('S n) (i ': is) (i ': js) (i ': ks) where
+    append sh (Tensor d x) (Tensor e y) =
+        Tensor (take i d G.++ f) (G.generate len gnr)
+            where f ∷ U.Vector Word
+                  f = (d G.! i + e G.! i) `cons` drop (succ i) d
+                  len, m, n, o, i ∷ Int
+                  len = fromIntegral $ product (take i d G.++ f)
+                  m = fromIntegral $ product $ drop i d
+                  n = fromIntegral $ product $ drop i e
+                  o = fromIntegral $ product f
+                  i = pred $ P.head $ fromShape sh
+                  gnr k = let (q,r) = quotRem k o
+                          in if r < m
+                             then x G.! (q⋅m + r)
+                             else y G.! (q⋅n + r - m)
+    split sh t = (u1,u2)
+            where d1 ∷ Shape (i ': is)
+                  d1 = shape
+                  u1 = unsafeTensorGen (fromList $ fromShape d1) (unsafeTensorGet t)
+                  d2 ∷ Shape (i ': js)
+                  d2 = shape
+                  u2 = unsafeTensorGen (fromList $ fromShape d2) (unsafeTensorGet t ∘ f)
+                  f = let i = pred $ P.head $ fromShape sh in
+                      imap (\n → if n ≡ i then (+) (fromShape d1 !! i) else id)
+
+-----------------------------------  IsList  -----------------------------------
+
+instance ShapeI is ⇒ IsList (Tensor is e) where
+    type Item (Tensor is e) = e
+    fromList l = let s = (shape ∷ Shape is)
+                     ds = fromList $ fromShape s
+                 in if P.length l ≡ (fromIntegral $ product ds)
+                    then Tensor ds $ fromList l
+                    else throw WrongListLength
+    toList = toList ∘ content
+
+-----------------------------------  NFData  -----------------------------------
+
+instance NFData e ⇒ NFData (Tensor is e) where
+    rnf (Tensor d u) = rnf d `seq` rnf u
+
+-----------------------------------  Random  -----------------------------------
+
+instance (Random e, ShapeI is) ⇒ Random (Tensor is e) where
+    randomR (l, h) =
+        let l' = toList $ content l
+            h' = toList $ content h
+        in first (Tensor (form l) ∘ fromList) ∘ randomListR (l', h')
+    random = let s = (shape ∷ Shape is)
+                 ds = fromList $ fromShape s
+                 l = product ds
+             in first (Tensor ds ∘ fromList) ∘ randomsWithLength l
+        where randomsWithLength 0 g = ([], g)
+              randomsWithLength d g = let (x , g1) = random g
+                                          (xs, g2) = randomsWithLength (d-1) g1
+                                      in (x:xs, g2)
+
+randomListR ∷ (Random a, RandomGen g) ⇒ ([a], [a]) → g → ([a], g)
+randomListR ([]  , _   ) g = ([], g)
+randomListR (_   , []  ) g = ([], g)
+randomListR (l:ls, h:hs) g = let (x , g1) = randomR (l, h) g
+                                 (xs, g2) = randomListR (ls, hs) g1
+                             in (x:xs, g2)
+
+----------------------------------  Sliceable ----------------------------------
+
+sliceV ∷ V.Vector a → U.Vector Word → V.Vector (Maybe Word) → V.Vector a
+sliceV v sh sl = G.generate (sliceSize sh sl) (\x → v G.! f sh ks sl 0 x)
+    where ks ∷ U.Vector Word
+          ks = prescanr' (⋅) 1 sh
+          f ∷ U.Vector Word → U.Vector Word → V.Vector (Maybe Word) → Int
+            → Int → Int
+          f zh js zl acc x
+              | null zh   = acc
+              | otherwise = case head zl of
+                              Just i  → f (tail zh) (tail js) (tail zl)
+                                        (acc + fromIntegral (i ⋅ head js))
+                                        x
+                              Nothing → let (q,r) = quotRem x
+                                                    (sliceSize (tail zh)
+                                                     (tail zl))
+                                        in f (tail zh) (tail js) (tail zl)
+                                           (acc + q ⋅ (fromIntegral $ head js))
+                                           r
+
+sliceSize ∷ U.Vector Word → V.Vector (Maybe Word) → Int
+sliceSize sh = fromIntegral ∘ ifoldr' (\i m acc → case m of
+                                                    Nothing → sh G.! i ⋅ acc
+                                                    _       → acc
+                                      ) 1
+
+sliceSh ∷ V.Vector (Maybe Word) → U.Vector Word → U.Vector Word
+sliceSh sl = ifilter (\i _ → case sl G.! i of
+                                Nothing → True
+                                _       → False
+                      )
+
+-- | An @'IsSlicer'@ type optimized for slicing @'Tensor'@. It is internally
+-- represented as a @'V.Vector'@ of @'Maybe' 'Word'@.
+newtype Slicer (i ∷ [PI]) (j ∷ [Maybe PI]) (k ∷ [PI]) = Slicer
+    { unSl ∷ V.Vector (Maybe Word) }
+    deriving Eq
+
+instance IsSlicer Slicer where
+    nilS = Slicer G.empty
+    allCons = Slicer ∘ cons Nothing ∘ unSl
+    (&) i = Slicer ∘ cons (Just $ head $ unMultiIndex $ fromMultiIndex i) ∘ unSl
+    toSlicer NilSh        = const NilS
+    toSlicer (AllConsSh sh) = AllCons ∘ toSlicer sh ∘ Slicer ∘ tail ∘ unSl
+    toSlicer (AddDim _ :$ sh) =
+        (:&) (OneCons Nil) ∘ toSlicer sh ∘ Slicer ∘ tail ∘ unSl
+    toSlicer (AddLayer sh :$ ssh) =
+        bumpSl ∘ toSlicer (sh :$ ssh) ∘ Slicer ∘ predJHead ∘ unSl
+        where bumpSl ∷ S.Slicer (i ': is) (Just i ': js) ks
+                     → S.Slicer (S i ': is) (Just (S i) ': js) ks
+              bumpSl (i :& s) = HeadSucc i :& s
+              predJHead ∷ V.Vector (Maybe Word) → V.Vector (Maybe Word)
+              predJHead = imap (\i → if i ≡ 0
+                                     then Just ∘ pred ∘ fromJust
+                                     else id)
+
+instance Sliceable Tensor where
+    type Sl Tensor = Slicer
+    slice (Tensor sh v) (Slicer sl) = Tensor (sliceSh sl sh) (sliceV v sh sl)
+
+-----------------------------------  Reverse -----------------------------------
+
+instance Reverse Tensor '[] js js where
+    rev = unT0
+    unRev = fmap unT0
+
+instance Reverse Tensor is (i ': js) ks ⇒  Reverse Tensor (i ': is) js ks where
+    rev (Tensor sh v) =
+        let zh = reverse sh G.++ form (head v)
+            s1 = fromIntegral (sh G.! 0)
+            t  = fromIntegral $ product $ tail sh
+        in Tensor zh $ G.concat
+               [ content (v G.! (i + j⋅t)) | i ← [0..pred t], j ← [0..pred s1] ]
+    unRev (Tensor sh v) =
+        Tensor zh $ G.generate (fromIntegral $ product zh) gnr
+        where gnr i = let (q,r) = quotRem i s
+                      in content (v G.! r) G.! transposeV rh q
+              zh = rh G.++ sh
+              s = fromIntegral $ product sh
+              rh = reverse $ form $ head v
+              transposeV ∷ U.Vector Word → Int → Int
+              transposeV ds = linearize ds ∘ G.reverse ∘ unlinearize ds
+
+--------------------------------------------------------------------------------
