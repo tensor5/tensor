@@ -8,6 +8,7 @@ Author:         Federico Squartini, Nicola Squartini
 Maintainer:     Nicola Squartini <tensor5@gmail.com>
 Stability:      experimental
 Homepage:       http://noaxiom.org/tensor
+Bug-Reports:    https://github.com/tensor5/tensor/issues
 Synopsis:       A completely type-safe library for linear algebra
 Category:       Data, Math
 Build-Type:     Simple
@@ -18,6 +19,15 @@ Description:
   for more details.
 
 Extra-Source-Files: CHANGELOG
+
+Source-Repository head
+  Type:      git
+  Location:  git://github.com/tensor5/tensor.git
+
+Source-Repository this
+  Type:      git
+  Location:  git://github.com/tensor5/tensor.git
+  Tag:       v0.4.0.0
 
 Library
   Default-Language:    Haskell2010
