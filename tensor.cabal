@@ -18,7 +18,7 @@ Description:
   vectors and tensors. See the homepage <http://noaxiom.org/tensor>
   for more details.
 
-Extra-Source-Files: CHANGELOG
+Extra-Source-Files: CHANGELOG.md
                     README.md
 
 Source-Repository head
