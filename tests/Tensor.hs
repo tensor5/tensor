@@ -22,13 +22,13 @@ tests = return [appendTest, appendTest', sliceTest]
 
 appendTest ∷ Test
 appendTest = testGroup "Append and Split"
-             [ testProperty "2 3" (\x y → split (AddDim Point) (append (AddDim Point) (x ∷ Vector (S One) Int) (y ∷ Vector (S (S One)) Int)) ≡ (x,y))
-             , testProperty "2 3" (\x y → split (AddDim Point) (append (AddDim Point) (x ∷ Matrix (S One) (S (S One)) Int) (y ∷ Matrix (S (S One)) (S (S One)) Int)) ≡ (x,y))
+             [ testProperty "2 3" (\x y → split SOne (append SOne (x ∷ Vector (S One) Int) (y ∷ Vector (S (S One)) Int)) ≡ (x,y))
+             , testProperty "2 3" (\x y → split SOne (append SOne (x ∷ Matrix (S One) (S (S One)) Int) (y ∷ Matrix (S (S One)) (S (S One)) Int)) ≡ (x,y))
              ]
 
 appendTest' ∷ Test
 appendTest' = testGroup "Append and |:"
-              [ testProperty "[3] [2,3]" (\x y → append (AddDim Point) (t1 x) y ≡ (x ∷ Vector (S (S One)) Int) |: (y ∷ Matrix (S One) (S (S One)) Int))
+              [ testProperty "[3] [2,3]" (\x y → append SOne (t1 x) y ≡ (x ∷ Vector (S (S One)) Int) |: (y ∷ Matrix (S One) (S (S One)) Int))
               ]
 
 sliceTest ∷ Test

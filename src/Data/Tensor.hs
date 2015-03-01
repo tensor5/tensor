@@ -46,19 +46,21 @@ module Data.Tensor
 import           Control.Applicative
 import           Control.Arrow
 import           Control.DeepSeq
-import           Control.Exception     (Exception)
-import           Control.Exception     (throw)
-import           Control.Monad         (liftM)
+import           Control.Exception            (Exception)
+import           Control.Exception            (throw)
+import           Control.Monad                (liftM)
 import           Data.Functor.Identity
+import           Data.Singletons
+import           Data.Singletons.Prelude.List hiding (Reverse)
 import           Data.Typeable
-import           GHC.Exts              (IsList (..))
-import           Prelude               hiding (concat, map)
+import           GHC.Exts                     (IsList (..))
+import           Prelude                      hiding (concat, map)
 import           Prelude.Unicode
-import           System.Random         hiding (split)
+import           System.Random                hiding (split)
 
-import           Data.MultiIndex       hiding (fromList, toList)
-import           Data.Sliceable        hiding (AllCons, NilS, Slicer)
-import qualified Data.Sliceable        as S
+import           Data.MultiIndex              hiding (fromList, toList)
+import           Data.Sliceable               hiding (AllCons, NilS, Slicer)
+import qualified Data.Sliceable               as S
 
 
 -- | Class of types isomorphic to @'Tensor'@.
@@ -77,13 +79,13 @@ class IsMultiIndex (Index t) ⇒ IsTensor (t ∷ [PI] → * → *) where
     fromTensor (T0 e)    = t0 e
     fromTensor (T1 t)    = t1 $ fromTensor t
     fromTensor (t :| ts) = fromTensor t |: fromTensor ts
-    toTensor ∷ ShapeI is ⇒ t is e → Tensor is e
-    toTensor = toT shape
+    toTensor ∷ SingI is ⇒ t is e → Tensor is e
+    toTensor = toT sing
         where toT ∷ Shape is → t is e → Tensor is e
-              toT Point         = T0 ∘ unT0
-              toT (AddDim sh)   = T1 ∘ toT sh ∘ unT1
-              toT (AddLayer sh) =
-                  uncurry (:|) ∘ (toT (flatten sh) *** toT sh) ∘ unCons
+              toT SNil              = T0 ∘ unT0
+              toT (SCons SOne   sh) = T1 ∘ toT sh ∘ unT1
+              toT (SCons (SS i) sh) =
+                  uncurry (:|) ∘ (toT sh *** toT (SCons i sh)) ∘ unCons
     gen ∷ Shape is → (Index t is → e) → t is e
     gen s f = runIdentity $ genA s (Identity ∘ f)
     genA ∷ Applicative f ⇒ Shape is → (Index t is → f e) → f (t is e)
@@ -99,18 +101,18 @@ class IsMultiIndex (Index t) ⇒ IsTensor (t ∷ [PI] → * → *) where
 
 
 -- | Generate a tensor from an (index → element) map.
-generate ∷ (ShapeI is, IsTensor t) ⇒ (Index t is → e) → t is e
-generate = gen shape
+generate ∷ (SingI is, IsTensor t) ⇒ (Index t is → e) → t is e
+generate = gen sing
 
 -- | Same as @'generate'@ but works inside a @'Monad'@.
-generateM ∷ (Monad m, ShapeI is, IsTensor t) ⇒ (Index t is → m e) → m (t is e)
-generateM = genM shape
+generateM ∷ (Monad m, SingI is, IsTensor t) ⇒ (Index t is → m e) → m (t is e)
+generateM = genM sing
 
 
 -- | @'castTensor' f g t = 'generate' (g ∘ ('!') t ∘ f)@
 castTensor ∷ ( IsTensor t1
              , IsTensor t2
-             , ShapeI js
+             , SingI js
              ) ⇒ (Index t2 js → Index t1 is)
                → (e → f)
                → t1 is e
@@ -142,8 +144,8 @@ rowVector2Vector = unT1
 class IsTensor t ⇒
     Append t (n ∷ PI) (i1 ∷ [PI]) (i2 ∷ [PI]) (i3 ∷ [PI]) | t n i1 i2 → i3
     where
-      append ∷ Shape '[n] → t i1 e → t i2 e → t i3 e
-      split ∷ Shape '[n] → t i3 e → (t i1 e, t i2 e)
+      append ∷ SPI n → t i1 e → t i2 e → t i3 e
+      split ∷ SPI n → t i3 e → (t i1 e, t i2 e)
 
 
 -- | Class of tensor whose shape can be reversed.
@@ -225,19 +227,19 @@ instance IsTensor Tensor where
     unCons (t :| ts) = (t, ts)
     fromTensor = id
     toTensor = id
-    gen Point f         = T0 $ f Nil
-    gen (AddDim is) f   = T1 $ gen is (f ∘ OneCons)
-    gen (AddLayer is) f = gen (flatten is) (f ∘ OneCons) :|
-                          gen is (f ∘ HeadSucc)
-    genA Point f         = liftA T0 $ f Nil
-    genA (AddDim is) f   = liftA T1 $ genA is (f ∘ OneCons)
-    genA (AddLayer is) f =
-        liftA2 (:|) (genA (flatten is) (f ∘ OneCons)) (genA is (f ∘ HeadSucc))
-    genM Point f         = liftM T0 $ f Nil
-    genM (AddDim is) f   = liftM T1 $ genM is (f ∘ OneCons)
-    genM (AddLayer is) f = do t  ← genM (flatten is) (f ∘ OneCons)
-                              ts ← genM is (f ∘ HeadSucc)
-                              return (t :| ts)
+    gen SNil              f = T0 $ f Nil
+    gen (SCons SOne   is) f = T1 $ gen is (f ∘ OneCons)
+    gen (SCons (SS i) is) f = gen is (f ∘ OneCons) :|
+                              gen (SCons i is) (f ∘ HeadSucc)
+    genA SNil              f = liftA T0 $ f Nil
+    genA (SCons SOne   is) f = liftA T1 $ genA is (f ∘ OneCons)
+    genA (SCons (SS i) is) f =
+        liftA2 (:|) (genA is (f ∘ OneCons)) (genA (SCons i is) (f ∘ HeadSucc))
+    genM SNil              f = liftM T0 $ f Nil
+    genM (SCons SOne   is) f = liftM T1 $ genM is (f ∘ OneCons)
+    genM (SCons (SS i) is) f = do t  ← genM is (f ∘ OneCons)
+                                  ts ← genM (SCons i is) (f ∘ HeadSucc)
+                                  return (t :| ts)
     map f (T0 e)    = T0 $ f e
     map f (T1 t)    = T1 $ map f t
     map f (t :| ts) = map f t :| map f ts
@@ -273,21 +275,21 @@ instance Append Tensor One (One ': is) (i ': is) (S i ': is) where
 instance Append Tensor One (i ': is) (j ': is) (k ': is) ⇒
     Append Tensor One (S i ': is) (j ': is) (S k ': is)
     where
-      append _ (t :| ts) u = t :| append (AddDim Point) ts u
-      split _ (t :| ts) = let (u, v) = split (AddDim Point) ts
+      append _ (t :| ts) u = t :| append SOne ts u
+      split _ (t :| ts) = let (u, v) = split SOne ts
                           in (t :| u, v)
 
 instance Append Tensor n is js ks ⇒
     Append Tensor ('S n) (i ': is) (i ': js) (i ': ks)
     where
-      append (AddLayer n) (T1 t) (T1 u) = T1 $ append n t u
-      append (AddLayer n) (t :| ts) (u :| us) =  append n t u
-                                                 :| append (AddLayer n) ts us
-      split (AddLayer n) (T1 t) = let (u, v) = split n t
-                                  in (T1 u, T1 v)
-      split (AddLayer n) (t :| ts) = let (u,  v ) = split n            t
-                                         (us, vs) = split (AddLayer n) ts
-                                     in (u :| us, v :| vs)
+      append (SS n) (T1 t) (T1 u) = T1 $ append n t u
+      append (SS n) (t :| ts) (u :| us) =  append n t u
+                                           :| append (SS n) ts us
+      split (SS n) (T1 t) = let (u, v) = split n t
+                            in (T1 u, T1 v)
+      split (SS n) (t :| ts) = let (u,  v ) = split n            t
+                                   (us, vs) = split (SS n) ts
+                               in (u :| us, v :| vs)
 
 
 -----------------------------------  IsList  -----------------------------------
@@ -303,13 +305,14 @@ instance IsList (Tensor is e) ⇒ IsList (Tensor (One ': is) e) where
     fromList = T1 ∘ fromList
     toList (T1 t) = toList t
 
-instance ( ShapeI (i ': is)
+instance ( SingI i
+         , SingI is
          , IsList (Tensor is e)
          , IsList (Tensor (i ': is) e)
          , Item (Tensor is e) ~ Item (Tensor (i ': is) e)
          ) ⇒ IsList (Tensor (S i ': is) e) where
     type Item (Tensor (S i ': is) e) = Item (Tensor is e)
-    fromList l = let s = fromShape (shape ∷ Shape (S i ': is))
+    fromList l = let s = fromShape (sing ∷ Shape (S i ': is))
                  in if length l ≡ product s
                     then uncurry (:|) $ (fromList *** fromList) $ splitAt (product $ tail s) l
                     else throw WrongListLength

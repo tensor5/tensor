@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs            #-}
 {-# LANGUAGE PolyKinds        #-}
-{-# LANGUAGE Safe             #-}
+{-# LANGUAGE Trustworthy      #-}
 {-# LANGUAGE TypeFamilies     #-}
 {-# LANGUAGE TypeOperators    #-}
 
@@ -26,11 +26,12 @@
 module Data.Sliceable
     ( Key
     , Slicer(..)
-    , KeyShape
     , SlicerShape(..)
     , IsSlicer(..)
     , Sliceable(..)
     ) where
+
+import           Data.Singletons
 
 
 -- | A polykinded type representing a key.
@@ -54,19 +55,13 @@ data Slicer ∷ [χ] → [Maybe χ] → [χ] → * where
     AllCons ∷ Slicer is js ks → Slicer (i ': is) (Nothing ': js) (i ': ks)
     (:&)    ∷ Key i → Slicer is js ks → Slicer (i ': is) (Just i ': js) ks
 
--- | A polykinded type representing the shape of a key. Instances of
--- @'KeyShape'@ should be singleton types.
-type family KeyShape (a ∷ χ) ∷ *
-
-type instance KeyShape (a ∷ *) = ()
-
 -- | Singleton type, represents the shape of a @'Slicer'@ ignoring the specific
 -- value selections.
 data SlicerShape ∷ [χ] → [Maybe χ] → [χ] → * where
     NilSh     ∷ SlicerShape '[] '[] '[]
     AllConsSh ∷ SlicerShape is js ks
               → SlicerShape (i ': is) (Nothing ': js) (i ': ks)
-    (:$)      ∷ KeyShape i
+    (:$)      ∷ Sing i
               → SlicerShape is js ks
               → SlicerShape (i ': is) (Just i ': js) ks
 

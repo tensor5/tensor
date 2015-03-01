@@ -3,7 +3,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs             #-}
 {-# LANGUAGE KindSignatures    #-}
-{-# LANGUAGE Safe              #-}
+{-# LANGUAGE Trustworthy       #-}
 {-# LANGUAGE TypeFamilies      #-}
 {-# LANGUAGE TypeOperators     #-}
 
@@ -29,23 +29,49 @@
 
 module Data.MultiIndex
     ( PI(..)
+    , Sing(SOne, SS)
+    , SPI
+    , Shape
+    , fromPI
     , IsMultiIndex(..)
-    , Shape(..)
-    , flatten
     , fromShape
-    , ShapeI(..)
     , MultiIndex(..)
     ) where
 
+import           Data.Singletons
+import           Data.Singletons.Prelude.List
 import           Prelude.Unicode
 
-import           Data.Sliceable  (Key, KeyShape)
+import           Data.Sliceable               (Key)
 
 
 -- | Kind of positive (non-zero) integers.
 data PI = One
         | S PI
           deriving Eq
+
+data instance Sing (n ∷ PI) where
+    SOne ∷ Sing One
+    SS   ∷ Sing n → Sing (S n)
+
+-- | Kind-restristed synonym for @'Sing'@, expressing a positive integer at type
+-- level: @type 'SPI' (n ∷ 'PI') = 'Sing' n@.
+type SPI (n ∷ PI) = Sing n
+
+-- | Kind-restricted synonym for @'Sing'@, expressing the shape of a multiindex
+-- or a multidimensional array: @type 'Shape' (is ∷ ['PI']) = 'Sing' is@.
+type Shape (is ∷ [PI]) = Sing is
+
+-- | Convert a singleton positive integer into a @'Num'@.
+fromPI ∷ Num a ⇒ SPI n → a
+fromPI SOne   = 1
+fromPI (SS n) = 1 + fromPI n
+
+instance SingI One where
+    sing = SOne
+
+instance SingI n ⇒ SingI (S n) where
+    sing = SS sing
 
 -- | Class of types isomorphic to @'MultiIndex'@. Instances should satisfy the
 -- following properties:
@@ -65,58 +91,33 @@ class IsMultiIndex (m ∷ [PI] → *) where
     fromMultiIndex Nil           = nil
     fromMultiIndex (OneCons is)  = oneCons $ fromMultiIndex is
     fromMultiIndex (HeadSucc is) = headSucc $ fromMultiIndex is
-    toMultiIndex ∷ ShapeI is ⇒ m is → MultiIndex is
-    fromList ∷ (ShapeI is, Num a, Ord a) ⇒ [a] → Maybe (m is)
-    fromList = toM shape
+    toMultiIndex ∷ SingI is ⇒ m is → MultiIndex is
+    fromList ∷ (SingI is, Num a, Ord a) ⇒ [a] → Maybe (m is)
+    fromList = toM sing
         where toM ∷ (IsMultiIndex m, Num a, Ord a) ⇒
                   Shape is → [a] → Maybe (m is)
-              toM Point         []       = Just nil
-              toM Point         _        = Nothing
-              toM (AddDim sh)   (1 : xs) = case toM sh xs of
-                                             Nothing → Nothing
-                                             Just is → Just (oneCons is)
-              toM (AddDim _)    _        = Nothing
-              toM (AddLayer sh) (x:xs)
-                  | x > 1     = case toM sh ((x - 1) : xs) of
+              toM SNil              []       = Just nil
+              toM SNil              _        = Nothing
+              toM (SCons SOne   sh) (1 : xs) = case toM sh xs of
+                                                 Nothing → Nothing
+                                                 Just is → Just (oneCons is)
+              toM (SCons SOne   _ ) _        = Nothing
+              toM (SCons (SS i) sh) (x:xs)
+                  | x > 1     = case toM (SCons i sh) ((x - 1) : xs) of
                                   Nothing → Nothing
                                   Just is → Just (headSucc is)
-                  | x ≡ 1     = case toM (flatten sh) xs of
+                  | x ≡ 1     = case toM sh xs of
                                   Nothing → Nothing
                                   Just is → Just (oneCons is)
                   | otherwise = Nothing
-              toM (AddLayer _)  _        = Nothing
+              toM (SCons (SS _) _ ) _        = Nothing
     toList ∷ Num a ⇒ m is → [a]
 
--- | Singleton type for the kind @['PI']@.
-data Shape (is ∷ [PI]) where
-    Point    ∷ Shape '[]
-    AddDim   ∷ Shape is → Shape (One ': is)
-    AddLayer ∷ Shape (i ': is) → Shape (S i ': is)
-
--- | Reduce the dimension of @'Shape'@ by eliminating the first index.
-flatten ∷ Shape (i ': is) → Shape is
-flatten (AddDim is)   = is
-flatten (AddLayer is) = flatten is
 
 -- | Convert a @'Shape'@ into a @'Num'@eric list.
 fromShape ∷ Num a ⇒ Shape is → [a]
-fromShape Point         = []
-fromShape (AddDim is)   = 1 : fromShape is
-fromShape (AddLayer is) = let x : xs = fromShape is
-                          in (x + 1) : xs
-
--- | Class for implicit @'Shape'@ parameter.
-class ShapeI (is ∷ [PI]) where
-    shape ∷ Shape is
-
-instance ShapeI '[] where
-    shape = Point
-
-instance ShapeI is ⇒ ShapeI (One ': is) where
-    shape = AddDim shape
-
-instance ShapeI (i ': is) ⇒ ShapeI (S i ': is) where
-    shape = AddLayer shape
+fromShape SNil         = []
+fromShape (SCons i is) = fromPI i : fromShape is
 
 -- | A multidimensional index with fixed size and fixed (non-zero) dimensions.
 data MultiIndex ∷ [PI] → * where
@@ -154,5 +155,3 @@ instance IsMultiIndex MultiIndex where
 
 
 type instance Key (a ∷ PI) = MultiIndex '[a]
-
-type instance KeyShape (a ∷ PI) = Shape '[a]

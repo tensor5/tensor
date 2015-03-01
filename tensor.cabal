@@ -37,6 +37,7 @@ Library
                        base-unicode-symbols  ==0.2.*,
                        deepseq               ==1.3.*,
                        random                >=1.0 && < 1.2,
+                       singletons            ==1.1.*,
                        transformers          ==0.3.*,
                        vector                ==0.10.*
   Build-Tools:         ghc >= 7.8.1

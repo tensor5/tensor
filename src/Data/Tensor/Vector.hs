@@ -50,31 +50,35 @@ module Data.Tensor.Vector
 import           Control.Applicative
 import           Control.Arrow
 import           Control.DeepSeq
-import           Control.Exception   (throw)
-import           Control.Monad       (liftM)
-import           Data.Function       (on)
-import           Data.Maybe          (fromJust)
-import qualified Data.Vector         as V
-import           Data.Vector.Generic hiding (Vector, fromList, replicate,
-                                      toList, (++))
-import qualified Data.Vector.Generic as G
-import qualified Data.Vector.Unboxed as U
+import           Control.Exception            (throw)
+import           Control.Monad                (liftM)
+import           Data.Function                (on)
+import           Data.Maybe                   (fromJust)
+import           Data.Singletons
+import           Data.Singletons.Prelude.List hiding (Reverse)
+import qualified Data.Vector                  as V
+import           Data.Vector.Generic          hiding (Vector, fromList,
+                                               replicate, toList, (++))
+import qualified Data.Vector.Generic          as G
+import qualified Data.Vector.Unboxed          as U
 import           Data.Word
-import           GHC.Exts            (IsList (..))
-import           Prelude             hiding (drop, head, init, length, null,
-                                      product, reverse, splitAt, tail, take,
-                                      zipWith)
-import qualified Prelude             as P
+import           GHC.Exts                     (IsList (..))
+import           Prelude                      hiding (drop, head, init, length,
+                                               null, product, reverse, splitAt,
+                                               tail, take, zipWith)
+import qualified Prelude                      as P
 import           Prelude.Unicode
 import           System.Random
 
-import           Data.MultiIndex     hiding (MultiIndex, fromList, toList)
-import qualified Data.MultiIndex     as M
-import           Data.Sliceable      hiding (Slicer)
-import qualified Data.Sliceable      as S
-import           Data.Tensor         hiding (ColumnVector, Matrix, RowVector,
-                                      Slicer (..), Tensor, Vector)
-import qualified Data.Tensor         as T
+import           Data.MultiIndex              hiding (MultiIndex, fromList,
+                                               toList)
+import qualified Data.MultiIndex              as M
+import           Data.Sliceable               hiding (Slicer)
+import qualified Data.Sliceable               as S
+import           Data.Tensor                  hiding (ColumnVector, Matrix,
+                                               RowVector, Slicer (..), Tensor,
+                                               Vector)
+import qualified Data.Tensor                  as T
 
 
 -- | An @'IsMultiIndex'@ type optimized for indexing @'Tensor'@. It is
@@ -91,14 +95,14 @@ instance IsMultiIndex MultiIndex where
     nil = MultiIndex G.empty
     oneCons = MultiIndex ∘ cons 1 ∘ unMultiIndex
     headSucc = MultiIndex ∘ succHead ∘ unMultiIndex
-    toMultiIndex = toM shape
+    toMultiIndex = toM sing
         where
           toM ∷ Shape is → MultiIndex is → M.MultiIndex is
-          toM Point         = const Nil
-          toM (AddDim sh)   =
+          toM SNil              = const Nil
+          toM (SCons SOne   sh) =
               OneCons ∘ toM sh ∘ MultiIndex ∘ tail ∘ unMultiIndex
-          toM (AddLayer sh) =
-              headSucc ∘ toM sh ∘ MultiIndex ∘ predHead ∘ unMultiIndex
+          toM (SCons (SS i) sh) =
+              headSucc ∘ toM (SCons i sh) ∘ MultiIndex ∘ predHead ∘ unMultiIndex
     toList = P.map fromIntegral ∘ toList ∘ unMultiIndex
 
 predHead ∷ U.Vector Word → U.Vector Word
@@ -173,8 +177,8 @@ instance Functor (Tensor is) where
 
 ---------------------------------  Applicative ---------------------------------
 
-instance ShapeI is ⇒ Applicative (Tensor is) where
-    pure e = let r = fromList $ fromShape (shape ∷ Shape is)
+instance SingI is ⇒ Applicative (Tensor is) where
+    pure e = let r = fromList $ fromShape (sing ∷ Shape is)
              in Tensor r $ G.replicate (fromIntegral $ product r) e
     (<*>) = ap
 
@@ -268,8 +272,8 @@ instance IsTensor Tensor where
 
 -----------------------------------  Append  -----------------------------------
 
-instance ( ShapeI is
-         , ShapeI (i ': is)
+instance ( SingI i
+         , SingI is
          ) ⇒ Append Tensor One (One ': is) (i ': is) (S i ': is) where
     append _ (Tensor d x) (Tensor e y) =
         Tensor (take i d G.++ f) (G.generate len gnr)
@@ -287,17 +291,18 @@ instance ( ShapeI is
                              else y G.! (q⋅n + r - m)
     split sh t = (u1,u2)
             where d1 ∷ Shape (One ': is)
-                  d1 = shape
+                  d1 = sing
                   u1 = unsafeTensorGen (fromList $ fromShape d1) (unsafeTensorGet t)
                   d2 ∷ Shape (i ': is)
-                  d2 = shape
+                  d2 = sing
                   u2 = unsafeTensorGen (fromList $ fromShape d2) (unsafeTensorGet t ∘ f)
-                  f = let i = pred $ P.head $ fromShape sh in
+                  f = let i = pred $ fromPI sh in
                       imap (\n → if n ≡ i then (+) (fromShape d1 !! i) else id)
 
 instance ( Append Tensor One (i ': is) (j ': is) (k ': is)
-         , ShapeI (i ': is)
-         , ShapeI (j ': is)
+         , SingI i
+         , SingI j
+         , SingI is
          ) ⇒ Append Tensor One (S i ': is) (j ': is) (S k ': is) where
     append _ (Tensor d x) (Tensor e y) =
         Tensor (take i d G.++ f) (G.generate len gnr)
@@ -315,17 +320,18 @@ instance ( Append Tensor One (i ': is) (j ': is) (k ': is)
                              else y G.! (q⋅n + r - m)
     split sh t = (u1,u2)
             where d1 ∷ Shape (S i ': is)
-                  d1 = shape
+                  d1 = sing
                   u1 = unsafeTensorGen (fromList $ fromShape d1) (unsafeTensorGet t)
                   d2 ∷ Shape (j ': is)
-                  d2 = shape
+                  d2 = sing
                   u2 = unsafeTensorGen (fromList $ fromShape d2) (unsafeTensorGet t ∘ f)
-                  f = let i = pred $ P.head $ fromShape sh in
+                  f = let i = pred $ fromPI sh in
                       imap (\n → if n ≡ i then (+) (fromShape d1 !! i) else id)
 
 instance ( Append Tensor n is js ks
-         , ShapeI (i ': is)
-         , ShapeI (i ': js)
+         , SingI i
+         , SingI is
+         , SingI js
          ) ⇒ Append Tensor ('S n) (i ': is) (i ': js) (i ': ks) where
     append sh (Tensor d x) (Tensor e y) =
         Tensor (take i d G.++ f) (G.generate len gnr)
@@ -336,26 +342,26 @@ instance ( Append Tensor n is js ks
                   m = fromIntegral $ product $ drop i d
                   n = fromIntegral $ product $ drop i e
                   o = fromIntegral $ product f
-                  i = pred $ P.head $ fromShape sh
+                  i = pred $ fromPI sh
                   gnr k = let (q,r) = quotRem k o
                           in if r < m
                              then x G.! (q⋅m + r)
                              else y G.! (q⋅n + r - m)
     split sh t = (u1,u2)
             where d1 ∷ Shape (i ': is)
-                  d1 = shape
+                  d1 = sing
                   u1 = unsafeTensorGen (fromList $ fromShape d1) (unsafeTensorGet t)
                   d2 ∷ Shape (i ': js)
-                  d2 = shape
+                  d2 = sing
                   u2 = unsafeTensorGen (fromList $ fromShape d2) (unsafeTensorGet t ∘ f)
-                  f = let i = pred $ P.head $ fromShape sh in
+                  f = let i = pred $ fromPI sh in
                       imap (\n → if n ≡ i then (+) (fromShape d1 !! i) else id)
 
 -----------------------------------  IsList  -----------------------------------
 
-instance ShapeI is ⇒ IsList (Tensor is e) where
+instance SingI is ⇒ IsList (Tensor is e) where
     type Item (Tensor is e) = e
-    fromList l = let s = (shape ∷ Shape is)
+    fromList l = let s = (sing ∷ Shape is)
                      ds = fromList $ fromShape s
                  in if P.length l ≡ (fromIntegral $ product ds)
                     then Tensor ds $ fromList l
@@ -369,12 +375,12 @@ instance NFData e ⇒ NFData (Tensor is e) where
 
 -----------------------------------  Random  -----------------------------------
 
-instance (Random e, ShapeI is) ⇒ Random (Tensor is e) where
+instance (Random e, SingI is) ⇒ Random (Tensor is e) where
     randomR (l, h) =
         let l' = toList $ content l
             h' = toList $ content h
         in first (Tensor (form l) ∘ fromList) ∘ randomListR (l', h')
-    random = let s = (shape ∷ Shape is)
+    random = let s = (sing ∷ Shape is)
                  ds = fromList $ fromShape s
                  l = product ds
              in first (Tensor ds ∘ fromList) ∘ randomsWithLength l
@@ -433,12 +439,12 @@ instance IsSlicer Slicer where
     nilS = Slicer G.empty
     allCons = Slicer ∘ cons Nothing ∘ unSl
     (&) i = Slicer ∘ cons (Just $ head $ unMultiIndex $ fromMultiIndex i) ∘ unSl
-    toSlicer NilSh        = const NilS
+    toSlicer NilSh          = const NilS
     toSlicer (AllConsSh sh) = AllCons ∘ toSlicer sh ∘ Slicer ∘ tail ∘ unSl
-    toSlicer (AddDim _ :$ sh) =
-        (:&) (OneCons Nil) ∘ toSlicer sh ∘ Slicer ∘ tail ∘ unSl
-    toSlicer (AddLayer sh :$ ssh) =
-        bumpSl ∘ toSlicer (sh :$ ssh) ∘ Slicer ∘ predJHead ∘ unSl
+    toSlicer (SOne :$ ssh)  =
+        (:&) (OneCons Nil) ∘ toSlicer ssh ∘ Slicer ∘ tail ∘ unSl
+    toSlicer (SS n :$ ssh)  =
+        bumpSl ∘ toSlicer (n :$ ssh) ∘ Slicer ∘ predJHead ∘ unSl
         where bumpSl ∷ S.Slicer (i ': is) (Just i ': js) ks
                      → S.Slicer (S i ': is) (Just (S i) ': js) ks
               bumpSl (i :& s) = HeadSucc i :& s
