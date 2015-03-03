@@ -30,12 +30,12 @@
 
 module Data.Tensor
     ( IsTensor(..)
+    , Append(..), AppendI(..)
     , generate, generateM
     , castTensor
     , TensorException(..)
     , vector2RowVector
     , rowVector2Vector
-    , Append(..)
     , Reverse(..)
     , Tensor(..)
     , Vector, Matrix
@@ -98,6 +98,14 @@ class IsMultiIndex (Index t) ⇒ IsTensor (t ∷ [PI] → * → *) where
     ta ∷ Index t '[i] → t (i ': is) e → t is e
     transpose ∷ t '[i, j] e → t '[j, i] e
     transpose = unT0 ∘ concat ∘ concat ∘ map t0
+    -- |
+    --
+    -- @'split' n ∘ 'append' n ≡ '(,)'@
+    append ∷ AppendI n is js ks ⇒ SPI n → t is e → t js e → t ks e
+    -- |
+    --
+    -- @'uncurry' ('append' n) ∘ 'split' n ≡ 'id'@
+    split ∷ AppendI n is js ks ⇒ SPI n → t ks e → (t is e, t js e)
 
 
 -- | Generate a tensor from an (index → element) map.
@@ -136,16 +144,26 @@ rowVector2Vector ∷ IsTensor t ⇒ t '[One, i] e → t '[i] e
 rowVector2Vector = unT1
 
 
--- |
---
--- @'split' sh ∘ 'append' sh ≡ '(,)'@
---
--- @'uncurry' ('append' sh) ∘ 'split' sh ≡ 'id'@
-class IsTensor t ⇒
-    Append t (n ∷ PI) (i1 ∷ [PI]) (i2 ∷ [PI]) (i3 ∷ [PI]) | t n i1 i2 → i3
-    where
-      append ∷ SPI n → t i1 e → t i2 e → t i3 e
-      split ∷ SPI n → t i3 e → (t i1 e, t i2 e)
+-- | Expresses the possible ways to append one tensor to another.
+data Append ∷ PI → [PI] → [PI] → [PI] → * where
+    A1 ∷ Append One (One ': is) (i ': is) (S i ': is)
+    A1S ∷ Append One (i ': is) (j ': is) (k ': is)
+        → Append One (S i ': is) (j ': is) (S k ': is)
+    An ∷ Append n is js ks → Append (S n) (i ': is) (i ': js) (i ': ks)
+
+-- | Class for implicit @'Append'@ parameter.
+class AppendI (n ∷ PI) (is ∷ [PI]) (js ∷ [PI]) (ks ∷ [PI]) | n is js → ks where
+    appendSing ∷ Append n is js ks
+
+instance AppendI One (One ': is) (i ': is) (S i ': is) where
+    appendSing = A1
+
+instance AppendI One (i ': is) (j ': is) (k ': is) ⇒
+    AppendI One (S i ': is) (j ': is) (S k ': is) where
+    appendSing = A1S appendSing
+
+instance AppendI n is js ks ⇒ AppendI (S n) (i ': is) (i ': js) (i ': ks) where
+    appendSing = An appendSing
 
 
 -- | Class of tensor whose shape can be reversed.
@@ -265,32 +283,28 @@ instance IsTensor Tensor where
                     → Tensor (i ': S j ': is) e
               T1 u      |:: T1 v      = T1 (u :| v)
               (u :| us) |:: (v :| vs) = (u :| v) :| (us |:: vs)
-
------------------------------------  Append  -----------------------------------
-
-instance Append Tensor One (One ': is) (i ': is) (S i ': is) where
-      append _ (T1 t) u = t :| u
-      split _ (t :| u) = (T1 t, u)
-
-instance Append Tensor One (i ': is) (j ': is) (k ': is) ⇒
-    Append Tensor One (S i ': is) (j ': is) (S k ': is)
-    where
-      append _ (t :| ts) u = t :| append SOne ts u
-      split _ (t :| ts) = let (u, v) = split SOne ts
-                          in (t :| u, v)
-
-instance Append Tensor n is js ks ⇒
-    Append Tensor ('S n) (i ': is) (i ': js) (i ': ks)
-    where
-      append (SS n) (T1 t) (T1 u) = T1 $ append n t u
-      append (SS n) (t :| ts) (u :| us) =  append n t u
-                                           :| append (SS n) ts us
-      split (SS n) (T1 t) = let (u, v) = split n t
-                            in (T1 u, T1 v)
-      split (SS n) (t :| ts) = let (u,  v ) = split n            t
-                                   (us, vs) = split (SS n) ts
-                               in (u :| us, v :| vs)
-
+    append = append' appendSing
+        where append' ∷ Append n is js ks
+                      → SPI n → Tensor is e → Tensor js e → Tensor ks e
+              append' A1      _      (T1 t)    u         = t :| u
+              append' (A1S s) _      (t :| ts) u         = t :|
+                                                           append' s SOne ts u
+              append' (An s)  (SS n) (T1 t)    (T1 u)    = T1 $
+                                                           append' s n t u
+              append' (An s)  (SS n) (t :| ts) (u :| us) =
+                  append' s n t u :| append' (An s) (SS n) ts us
+    split = split' appendSing
+        where split' ∷ Append n is js ks
+                     → SPI n → Tensor ks e → (Tensor is e, Tensor js e)
+              split' A1      _      (t :| u ) = (T1 t, u)
+              split' (A1S s) _      (t :| ts) = let (u, v) = split' s SOne ts
+                                                in (t :| u, v)
+              split' (An s)  (SS n) (T1 t)    = let (u, v) = split' s n t
+                                                in (T1 u, T1 v)
+              split' (An s)  (SS n) (t :| ts) =
+                  let (u,  v ) = split' s      n      t
+                      (us, vs) = split' (An s) (SS n) ts
+                  in (u :| us, v :| vs)
 
 -----------------------------------  IsList  -----------------------------------
 

@@ -269,93 +269,39 @@ instance IsTensor Tensor where
                               l   = fromIntegral $ product t
                           in Tensor t $
                              G.slice (i ⋅ l) l u
-
------------------------------------  Append  -----------------------------------
-
-instance ( SingI i
-         , SingI is
-         ) ⇒ Append Tensor One (One ': is) (i ': is) (S i ': is) where
-    append _ (Tensor d x) (Tensor e y) =
-        Tensor (take i d G.++ f) (G.generate len gnr)
-            where f ∷ U.Vector Word
-                  f = (d G.! i + e G.! i) `cons` drop (succ i) d
-                  len, m, n, o, i ∷ Int
-                  len = fromIntegral $ product (take i d G.++ f)
-                  m = fromIntegral $ product $ drop i d
-                  n = fromIntegral $ product $ drop i e
-                  o = fromIntegral $ product f
-                  i = 0
-                  gnr k = let (q,r) = quotRem k o
-                          in if r < m
-                             then x G.! (q⋅m + r)
-                             else y G.! (q⋅n + r - m)
-    split sh t = (u1,u2)
-            where d1 ∷ Shape (One ': is)
-                  d1 = sing
-                  u1 = unsafeTensorGen (fromList $ fromShape d1) (unsafeTensorGet t)
-                  d2 ∷ Shape (i ': is)
-                  d2 = sing
-                  u2 = unsafeTensorGen (fromList $ fromShape d2) (unsafeTensorGet t ∘ f)
-                  f = let i = pred $ fromPI sh in
-                      imap (\n → if n ≡ i then (+) (fromShape d1 !! i) else id)
-
-instance ( Append Tensor One (i ': is) (j ': is) (k ': is)
-         , SingI i
-         , SingI j
-         , SingI is
-         ) ⇒ Append Tensor One (S i ': is) (j ': is) (S k ': is) where
-    append _ (Tensor d x) (Tensor e y) =
-        Tensor (take i d G.++ f) (G.generate len gnr)
-            where f ∷ U.Vector Word
-                  f = (d G.! i + e G.! i) `cons` drop (succ i) d
-                  len, m, n, o, i ∷ Int
-                  len = fromIntegral $ product (take i d G.++ f)
-                  m = fromIntegral $ product $ drop i d
-                  n = fromIntegral $ product $ drop i e
-                  o = fromIntegral $ product f
-                  i = 0
-                  gnr k = let (q,r) = quotRem k o
-                          in if r < m
-                             then x G.! (q⋅m + r)
-                             else y G.! (q⋅n + r - m)
-    split sh t = (u1,u2)
-            where d1 ∷ Shape (S i ': is)
-                  d1 = sing
-                  u1 = unsafeTensorGen (fromList $ fromShape d1) (unsafeTensorGet t)
-                  d2 ∷ Shape (j ': is)
-                  d2 = sing
-                  u2 = unsafeTensorGen (fromList $ fromShape d2) (unsafeTensorGet t ∘ f)
-                  f = let i = pred $ fromPI sh in
-                      imap (\n → if n ≡ i then (+) (fromShape d1 !! i) else id)
-
-instance ( Append Tensor n is js ks
-         , SingI i
-         , SingI is
-         , SingI js
-         ) ⇒ Append Tensor ('S n) (i ': is) (i ': js) (i ': ks) where
     append sh (Tensor d x) (Tensor e y) =
         Tensor (take i d G.++ f) (G.generate len gnr)
-            where f ∷ U.Vector Word
-                  f = (d G.! i + e G.! i) `cons` drop (succ i) d
-                  len, m, n, o, i ∷ Int
-                  len = fromIntegral $ product (take i d G.++ f)
-                  m = fromIntegral $ product $ drop i d
-                  n = fromIntegral $ product $ drop i e
-                  o = fromIntegral $ product f
-                  i = pred $ fromPI sh
-                  gnr k = let (q,r) = quotRem k o
-                          in if r < m
-                             then x G.! (q⋅m + r)
-                             else y G.! (q⋅n + r - m)
-    split sh t = (u1,u2)
-            where d1 ∷ Shape (i ': is)
-                  d1 = sing
-                  u1 = unsafeTensorGen (fromList $ fromShape d1) (unsafeTensorGet t)
-                  d2 ∷ Shape (i ': js)
-                  d2 = sing
-                  u2 = unsafeTensorGen (fromList $ fromShape d2) (unsafeTensorGet t ∘ f)
-                  f = let i = pred $ fromPI sh in
-                      imap (\n → if n ≡ i then (+) (fromShape d1 !! i) else id)
+        where f ∷ U.Vector Word
+              f = (d G.! i + e G.! i) `cons` drop (succ i) d
+              len, m, n, o, i ∷ Int
+              len = fromIntegral $ product (take i d G.++ f)
+              m = fromIntegral $ product $ drop i d
+              n = fromIntegral $ product $ drop i e
+              o = fromIntegral $ product f
+              i = pred $ fromPI sh
+              gnr k = let (q,r) = quotRem k o
+                      in if r < m
+                         then x G.! (q⋅m + r)
+                         else y G.! (q⋅n + r - m)
+    split = split' appendSing
+        where split' ∷ Append n is js ks
+                     → SPI n → Tensor ks e → (Tensor is e, Tensor js e)
+              split' a _ t = (u1, u2)
+                  where (i, f1S) = splitDims a
+                        f1, f2 ∷ U.Vector Word
+                        f1 = imap (\n → if n ≡ i then const f1S else id) $
+                             form t
+                        f2 = imap (\n → if n ≡ i then (\x → x - f1S) else id) $
+                             form t
+                        u1 = unsafeTensorGen f1 (unsafeTensorGet t)
+                        u2 = unsafeTensorGen f2 (unsafeTensorGet t ∘ fun)
+                        fun = imap (\n → if n ≡ i then (+) f1S else id)
+              splitDims ∷ Append n is js ks
+                        → (Int, Word) -- ( position of split (from 0)
+                                      -- , first form vector at split position)
+              splitDims A1      = (0,1)
+              splitDims (A1S s) = second succ $ splitDims s
+              splitDims (An s)  = first succ $ splitDims s
 
 -----------------------------------  IsList  -----------------------------------
 
