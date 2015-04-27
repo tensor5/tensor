@@ -129,7 +129,7 @@ type Matrix i j = Tensor '[i, j]
 
 
 -- | A matrix with only one column.
-type ColumnVector n = Matrix n One
+type ColumnVector n = Matrix n 'One
 
 -- | Transform a vector into a one-column matrix.
 vector2ColumnVector :: Vector n e -> ColumnVector n e
@@ -141,7 +141,7 @@ columnVector2Vector (Tensor ds x) = (Tensor (init ds) x)
 
 
 -- | A matrix with only one row.
-type RowVector n = Matrix One n
+type RowVector n = Matrix 'One n
 
 linearize ∷ U.Vector Word -- ^ Dimension array
           → U.Vector Word -- ^ Index array
@@ -391,8 +391,8 @@ instance IsSlicer Slicer where
         (:&) (OneCons Nil) ∘ toSlicer ssh ∘ Slicer ∘ tail ∘ unSl
     toSlicer (SS n :$ ssh)  =
         bumpSl ∘ toSlicer (n :$ ssh) ∘ Slicer ∘ predJHead ∘ unSl
-        where bumpSl ∷ S.Slicer (i ': is) (Just i ': js) ks
-                     → S.Slicer (S i ': is) (Just (S i) ': js) ks
+        where bumpSl ∷ S.Slicer (i ': is) ('Just i ': js) ks
+                     → S.Slicer ('S i ': is) ('Just ('S i) ': js) ks
               bumpSl (i :& s) = HeadSucc i :& s
               predJHead ∷ V.Vector (Maybe Word) → V.Vector (Maybe Word)
               predJHead = imap (\i → if i ≡ 0

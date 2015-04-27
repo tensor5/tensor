@@ -33,12 +33,11 @@ Source-Repository this
 Library
   Default-Language:    Haskell2010
   Default-Extensions:  UnicodeSyntax
-  Build-Depends:       base                  ==4.7.*,
+  Build-Depends:       base                  ==4.8.*,
                        base-unicode-symbols  ==0.2.*,
-                       deepseq               ==1.3.*,
+                       deepseq               ==1.4.*,
                        random                >=1.0 && < 1.2,
                        singletons            ==1.1.*,
-                       transformers          ==0.3.*,
                        vector                ==0.10.*
   Build-Tools:         ghc >= 7.8.1
   GHC-Options:         -Wall
@@ -53,7 +52,7 @@ Test-Suite test-multiindex
   Default-Language:    Haskell2010
   Default-Extensions:  UnicodeSyntax
   Test-Module:         MultiIndex
-  Build-Depends:       base                  == 4.7.*,
+  Build-Depends:       base                  == 4.8.*,
                        base-unicode-symbols  == 0.2.*,
                        Cabal                 >= 1.10,
                        cabal-test-quickcheck == 0.1.*,
@@ -67,11 +66,11 @@ Test-Suite test-tensor
   Default-Language:    Haskell2010
   Default-Extensions:  UnicodeSyntax
   Test-Module:         Tensor
-  Build-Depends:       base                  == 4.7.*,
+  Build-Depends:       base                  == 4.8.*,
                        base-unicode-symbols  == 0.2.*,
                        Cabal                 >= 1.10,
                        cabal-test-quickcheck == 0.1.*,
-                       QuickCheck            == 2.7.*,
+                       QuickCheck            == 2.8.*,
                        tensor                == 0.4.*
   GHC-Options:         -Wall
   Hs-Source-Dirs:      tests

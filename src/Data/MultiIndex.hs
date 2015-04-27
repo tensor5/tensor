@@ -51,8 +51,8 @@ data PI = One
           deriving Eq
 
 data instance Sing (n ∷ PI) where
-    SOne ∷ Sing One
-    SS   ∷ Sing n → Sing (S n)
+    SOne ∷ Sing 'One
+    SS   ∷ Sing n → Sing ('S n)
 
 -- | Kind-restristed synonym for @'Sing'@, expressing a positive integer at type
 -- level: @type 'SPI' (n ∷ 'PI') = 'Sing' n@.
@@ -67,10 +67,10 @@ fromPI ∷ Num a ⇒ SPI n → a
 fromPI SOne   = 1
 fromPI (SS n) = 1 + fromPI n
 
-instance SingI One where
+instance SingI 'One where
     sing = SOne
 
-instance SingI n ⇒ SingI (S n) where
+instance SingI n ⇒ SingI ('S n) where
     sing = SS sing
 
 -- | Class of types isomorphic to @'MultiIndex'@. Instances should satisfy the
@@ -86,7 +86,7 @@ instance SingI n ⇒ SingI (S n) where
 class IsMultiIndex (m ∷ [PI] → *) where
     nil ∷ m '[]
     oneCons ∷ m is → m (i ': is)
-    headSucc ∷ m (i ': is) → m (S i ': is)
+    headSucc ∷ m (i ': is) → m ('S i ': is)
     fromMultiIndex ∷ MultiIndex is → m is
     fromMultiIndex Nil           = nil
     fromMultiIndex (OneCons is)  = oneCons $ fromMultiIndex is
@@ -123,7 +123,7 @@ fromShape (SCons i is) = fromPI i : fromShape is
 data MultiIndex ∷ [PI] → * where
     Nil      ∷ MultiIndex '[]
     OneCons  ∷ MultiIndex is → MultiIndex (i ': is)
-    HeadSucc ∷ MultiIndex (i ': is) → MultiIndex (S i ': is)
+    HeadSucc ∷ MultiIndex (i ': is) → MultiIndex ('S i ': is)
 
 instance Eq (MultiIndex is) where
     Nil         == Nil         = True

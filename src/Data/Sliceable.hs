@@ -52,18 +52,18 @@ type instance Key (a ∷ *) = a
 -- match (@'Just'@) is required in the second list have been eliminated.
 data Slicer ∷ [χ] → [Maybe χ] → [χ] → * where
     NilS    ∷ Slicer '[] '[] '[]
-    AllCons ∷ Slicer is js ks → Slicer (i ': is) (Nothing ': js) (i ': ks)
-    (:&)    ∷ Key i → Slicer is js ks → Slicer (i ': is) (Just i ': js) ks
+    AllCons ∷ Slicer is js ks → Slicer (i ': is) ('Nothing ': js) (i ': ks)
+    (:&)    ∷ Key i → Slicer is js ks → Slicer (i ': is) ('Just i ': js) ks
 
 -- | Singleton type, represents the shape of a @'Slicer'@ ignoring the specific
 -- value selections.
 data SlicerShape ∷ [χ] → [Maybe χ] → [χ] → * where
     NilSh     ∷ SlicerShape '[] '[] '[]
     AllConsSh ∷ SlicerShape is js ks
-              → SlicerShape (i ': is) (Nothing ': js) (i ': ks)
+              → SlicerShape (i ': is) ('Nothing ': js) (i ': ks)
     (:$)      ∷ Sing i
               → SlicerShape is js ks
-              → SlicerShape (i ': is) (Just i ': js) ks
+              → SlicerShape (i ': is) ('Just i ': js) ks
 
 -- | Class of types isomorphic to @'Slicer'@. Instances should satisfy the
 -- following properties:
@@ -79,8 +79,8 @@ data SlicerShape ∷ [χ] → [Maybe χ] → [χ] → * where
 -- @'fromSlicer' '.' 'toSlicer' sh ≡ 'id'@
 class IsSlicer (s ∷ [χ] → [Maybe χ] → [χ] → *) where
     nilS ∷ s '[] '[] '[]
-    allCons ∷ s is js ks → s (i ': is) (Nothing ': js) (i ': ks)
-    (&) ∷ Key i → s is js ks → s (i ': is) (Just i ': js) ks
+    allCons ∷ s is js ks → s (i ': is) ('Nothing ': js) (i ': ks)
+    (&) ∷ Key i → s is js ks → s (i ': is) ('Just i ': js) ks
     fromSlicer ∷ Slicer is js ks → s is js ks
     fromSlicer NilS = nilS
     fromSlicer (AllCons sl) = allCons $ fromSlicer sl

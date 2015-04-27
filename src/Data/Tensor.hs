@@ -71,10 +71,10 @@ class IsMultiIndex (Index t) ⇒ IsTensor (t ∷ [PI] → * → *) where
     t0 = fromTensor ∘ T0
     unT0 ∷ t '[] e → e
     unT0 t = t ! nil
-    t1 ∷ t is e → t (One ': is) e
-    unT1 ∷ t (One ': is) e → t is e
-    (|:) ∷ t is e → t (n ': is) e → t (S n ': is) e
-    unCons ∷ t (S n ': is) e → (t is e, t (n ': is) e)
+    t1 ∷ t is e → t ('One ': is) e
+    unT1 ∷ t ('One ': is) e → t is e
+    (|:) ∷ t is e → t (n ': is) e → t ('S n ': is) e
+    unCons ∷ t ('S n ': is) e → (t is e, t (n ': is) e)
     fromTensor ∷ Tensor is e → t is e
     fromTensor (T0 e)    = t0 e
     fromTensor (T1 t)    = t1 $ fromTensor t
@@ -136,33 +136,33 @@ data TensorException = WrongListLength
 instance Exception TensorException
 
 -- | Transform a vector into a one-row matrix.
-vector2RowVector ∷ IsTensor t ⇒ t '[i] e → t '[One, i] e
+vector2RowVector ∷ IsTensor t ⇒ t '[i] e → t '[ 'One, i] e
 vector2RowVector = t1
 
 -- | Transform a one-row matrix into a vector.
-rowVector2Vector ∷ IsTensor t ⇒ t '[One, i] e → t '[i] e
+rowVector2Vector ∷ IsTensor t ⇒ t '[ 'One, i] e → t '[i] e
 rowVector2Vector = unT1
 
 
 -- | Expresses the possible ways to append one tensor to another.
 data Append ∷ PI → [PI] → [PI] → [PI] → * where
-    A1 ∷ Append One (One ': is) (i ': is) (S i ': is)
-    A1S ∷ Append One (i ': is) (j ': is) (k ': is)
-        → Append One (S i ': is) (j ': is) (S k ': is)
-    An ∷ Append n is js ks → Append (S n) (i ': is) (i ': js) (i ': ks)
+    A1 ∷ Append 'One ('One ': is) (i ': is) ('S i ': is)
+    A1S ∷ Append 'One (i ': is) (j ': is) (k ': is)
+        → Append 'One ('S i ': is) (j ': is) ('S k ': is)
+    An ∷ Append n is js ks → Append ('S n) (i ': is) (i ': js) (i ': ks)
 
 -- | Class for implicit @'Append'@ parameter.
 class AppendI (n ∷ PI) (is ∷ [PI]) (js ∷ [PI]) (ks ∷ [PI]) | n is js → ks where
     appendSing ∷ Append n is js ks
 
-instance AppendI One (One ': is) (i ': is) (S i ': is) where
+instance AppendI 'One ('One ': is) (i ': is) ('S i ': is) where
     appendSing = A1
 
-instance AppendI One (i ': is) (j ': is) (k ': is) ⇒
-    AppendI One (S i ': is) (j ': is) (S k ': is) where
+instance AppendI 'One (i ': is) (j ': is) (k ': is) ⇒
+    AppendI 'One ('S i ': is) (j ': is) ('S k ': is) where
     appendSing = A1S appendSing
 
-instance AppendI n is js ks ⇒ AppendI (S n) (i ': is) (i ': js) (i ': ks) where
+instance AppendI n is js ks ⇒ AppendI ('S n) (i ': is) (i ': js) (i ': ks) where
     appendSing = An appendSing
 
 
@@ -176,8 +176,8 @@ class IsTensor t ⇒ Reverse t (i ∷ [PI]) (j ∷ [PI]) (k ∷ [PI]) | t i j �
 -- | A multi dimensional array with fixed non-zero dimensions.
 data Tensor ∷ [PI] → * → * where
     T0   ∷ e → Tensor '[] e
-    T1   ∷ Tensor is e → Tensor (One ': is) e
-    (:|) ∷ Tensor is e → Tensor (n ': is) e → Tensor (S n ': is) e
+    T1   ∷ Tensor is e → Tensor ('One ': is) e
+    (:|) ∷ Tensor is e → Tensor (n ': is) e → Tensor ('S n ': is) e
 
 infixr 5 :|
 
@@ -188,10 +188,10 @@ type Vector i = Tensor '[i]
 type Matrix i j = Tensor '[i, j]
 
 -- | A matrix with only one column.
-type ColumnVector i = Matrix i One
+type ColumnVector i = Matrix i 'One
 
 -- | A matrix with only one row.
-type RowVector i = Matrix One i
+type RowVector i = Matrix 'One i
 
 -------------------------------------  Eq  -------------------------------------
 
@@ -211,13 +211,13 @@ instance Applicative (Tensor '[]) where
     pure e = T0 e
     T0 f <*> T0 e = T0 (f e)
 
-instance Applicative (Tensor is) ⇒ Applicative (Tensor (One ': is)) where
+instance Applicative (Tensor is) ⇒ Applicative (Tensor ('One ': is)) where
     pure e = T1 (pure e)
     T1 f <*> T1 t = T1 (f <*> t)
 
 instance ( Applicative (Tensor is)
          , Applicative (Tensor (i ': is))
-         ) ⇒ Applicative (Tensor (S i ': is)) where
+         ) ⇒ Applicative (Tensor ('S i ': is)) where
     pure e = pure e :| pure e
     (f :| fs) <*> (t :| ts) = (f <*> t) :| (fs <*> ts)
 
@@ -274,13 +274,13 @@ instance IsTensor Tensor where
     unConcat (T0 (T1 t))    = T1 $ T0 t
     unConcat (T0 (t :| ts)) = T0 t :| unConcat (T0 ts)
     unConcat (T1 t)         = putT1 $ unConcat t
-        where putT1 ∷ Tensor (i ': is) e → Tensor (i ': One ': is) e
+        where putT1 ∷ Tensor (i ': is) e → Tensor (i ': 'One ': is) e
               putT1 (T1 u)     = T1 $ T1 u
               putT1 (u :| us) = T1 u :| putT1 us
     unConcat (t :| ts)      = unConcat t |:: unConcat ts
         where (|::) ∷ Tensor (i ': is) e
                     → Tensor (i ': j ': is) e
-                    → Tensor (i ': S j ': is) e
+                    → Tensor (i ': 'S j ': is) e
               T1 u      |:: T1 v      = T1 (u :| v)
               (u :| us) |:: (v :| vs) = (u :| v) :| (us |:: vs)
     append = append' appendSing
@@ -314,8 +314,8 @@ instance IsList (Tensor '[] e) where
     fromList _   = throw WrongListLength
     toList (T0 e) = [e]
 
-instance IsList (Tensor is e) ⇒ IsList (Tensor (One ': is) e) where
-    type Item (Tensor (One ': is) e) = Item (Tensor is e)
+instance IsList (Tensor is e) ⇒ IsList (Tensor ('One ': is) e) where
+    type Item (Tensor ('One ': is) e) = Item (Tensor is e)
     fromList = T1 ∘ fromList
     toList (T1 t) = toList t
 
@@ -324,9 +324,9 @@ instance ( SingI i
          , IsList (Tensor is e)
          , IsList (Tensor (i ': is) e)
          , Item (Tensor is e) ~ Item (Tensor (i ': is) e)
-         ) ⇒ IsList (Tensor (S i ': is) e) where
-    type Item (Tensor (S i ': is) e) = Item (Tensor is e)
-    fromList l = let s = fromShape (sing ∷ Shape (S i ': is))
+         ) ⇒ IsList (Tensor ('S i ': is) e) where
+    type Item (Tensor ('S i ': is) e) = Item (Tensor is e)
+    fromList l = let s = fromShape (sing ∷ Shape ('S i ': is))
                  in if length l ≡ product s
                     then uncurry (:|) $ (fromList *** fromList) $ splitAt (product $ tail s) l
                     else throw WrongListLength
@@ -345,13 +345,13 @@ instance Random e ⇒ Random (Tensor '[] e) where
     randomR (T0 a, T0 b) = first T0 ∘ randomR (a, b)
     random = first T0 ∘ random
 
-instance Random (Tensor is e) ⇒ Random (Tensor (One ': is) e) where
+instance Random (Tensor is e) ⇒ Random (Tensor ('One ': is) e) where
     randomR (T1 t, T1 u) = first T1 ∘ randomR (t, u)
     random = first T1 ∘ random
 
 instance ( Random (Tensor is e)
          , Random (Tensor (i ': is) e)
-         ) ⇒ Random (Tensor (S i ': is) e) where
+         ) ⇒ Random (Tensor ('S i ': is) e) where
     randomR (t :| ts, u :| us) g = let (v,  g1) = randomR (t, u) g
                                        (vs, g2) = randomR (ts, us) g1
                                    in (v :| vs, g2)
@@ -366,11 +366,11 @@ instance ( Random (Tensor is e)
 data Slicer ∷ [PI] → [Maybe PI] → [PI] → * where
     NilS       ∷ Slicer '[] '[] '[]
     AllCons    ∷ Slicer is js ks
-               → Slicer (i ': is) (Nothing ': js) (i ': ks)
+               → Slicer (i ': is) ('Nothing ': js) (i ': ks)
     OneConsSl  ∷ Slicer is js ks
-               → Slicer (i ': is) (Just i ': js) ks
-    HeadSuccSl ∷ Slicer (i ': is) (Just i ': js) ks
-               → Slicer (S i ': is) (Just (S i) ': js) ks
+               → Slicer (i ': is) ('Just i ': js) ks
+    HeadSuccSl ∷ Slicer (i ': is) ('Just i ': js) ks
+               → Slicer ('S i ': is) ('Just ('S i) ': js) ks
 
 instance IsSlicer Slicer where
     nilS = NilS
@@ -381,8 +381,8 @@ instance IsSlicer Slicer where
     toSlicer _ (AllCons    sl) = S.AllCons $ toSlicer undefined sl
     toSlicer _ (OneConsSl  sl) = OneCons Nil :& toSlicer undefined sl
     toSlicer _ (HeadSuccSl sl) = bumpSl $ toSlicer undefined sl
-        where bumpSl ∷ S.Slicer (i ': is) (Just i ': js) ks
-                     → S.Slicer (S i ': is) (Just (S i) ': js) ks
+        where bumpSl ∷ S.Slicer (i ': is) ('Just i ': js) ks
+                     → S.Slicer ('S i ': is) ('Just ('S i) ': js) ks
               bumpSl (i :& s) = HeadSucc i :& s
 
 instance Sliceable Tensor where
