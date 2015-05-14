@@ -5,6 +5,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs                  #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE PolyKinds              #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE Trustworthy            #-}
 {-# LANGUAGE TypeFamilies           #-}
@@ -36,7 +37,7 @@ module Data.Tensor
     , TensorException(..)
     , vector2RowVector
     , rowVector2Vector
-    , Reverse(..)
+    , Reverse(..), ReverseI(..)
     , Tensor(..)
     , Vector, Matrix
     , ColumnVector, RowVector
@@ -106,6 +107,15 @@ class IsMultiIndex (Index t) ⇒ IsTensor (t ∷ [PI] → * → *) where
     --
     -- @'uncurry' ('append' n) ∘ 'split' n ≡ 'id'@
     split ∷ AppendI n is js ks ⇒ SPI n → t ks e → (t is e, t js e)
+    -- | @'concat'@ until the outside tensor has rank 0 and then @'unT0'@.
+    --
+    -- @'rev' ≡ 'unT0' ∘ 'concat' ∘ … ∘ 'concat'@
+    rev ∷ ReverseI is js ks ⇒ t is (t js e) → t ks e
+    -- | @'unConcat'@ until the inside tensors has rank 0 and then @'unT0'@ on
+    -- the inside tensors.
+    --
+    -- @'unRev' ≡ 'map' 'unT0' ∘ 'unConcat' ∘ … ∘ 'unConcat'@
+    unRev ∷ ReverseI is js ks ⇒ t js (t is e) → t ks e
 
 
 -- | Generate a tensor from an (index → element) map.
@@ -166,10 +176,21 @@ instance AppendI n is js ks ⇒ AppendI ('S n) (i ': is) (i ': js) (i ': ks) whe
     appendSing = An appendSing
 
 
--- | Class of tensor whose shape can be reversed.
-class IsTensor t ⇒ Reverse t (i ∷ [PI]) (j ∷ [PI]) (k ∷ [PI]) | t i j → k where
-    rev ∷ t i (t j e) → t k e
-    unRev ∷ t j (t i e) → t k e
+-- | Expresses the possible ways to reverse a list concatenating to a second
+-- list.
+data Reverse ∷ [χ] → [χ] → [χ] → * where
+    R0 ∷ Reverse '[] js js
+    R1 ∷ Reverse is (i ': js) ks → Reverse (i ': is) js ks
+
+-- | Class for implicit @'Reverse'@ parameter.
+class ReverseI is js ks | is js → ks where
+    reverseSing ∷ Reverse is js ks
+
+instance ReverseI '[] js js where
+    reverseSing = R0
+
+instance ReverseI is (i ': js) ks ⇒ ReverseI (i ': is) js ks where
+    reverseSing = R1 reverseSing
 
 --------------------------------------------------------------------------------
 
@@ -305,6 +326,14 @@ instance IsTensor Tensor where
                   let (u,  v ) = split' s      n      t
                       (us, vs) = split' (An s) (SS n) ts
                   in (u :| us, v :| vs)
+    rev = rev' reverseSing
+        where rev' ∷ Reverse is js ks → Tensor is (Tensor js e) → Tensor ks e
+              rev' R0     = unT0
+              rev' (R1 r) = rev' r ∘ concat
+    unRev = unRev' reverseSing
+        where unRev' ∷ Reverse is js ks → Tensor js (Tensor is e) → Tensor ks e
+              unRev' R0     = fmap unT0
+              unRev' (R1 r) = unRev' r ∘ unConcat
 
 -----------------------------------  IsList  -----------------------------------
 
@@ -393,15 +422,5 @@ instance Sliceable Tensor where
     slice (T1 t)    (OneConsSl sl) = slice t sl
     slice (t :| _ ) (OneConsSl sl) = slice t sl
     slice (_ :| ts) (HeadSuccSl sl) = slice ts sl
-
------------------------------------  Reverse -----------------------------------
-
-instance Reverse Tensor '[] js js where
-    rev = unT0
-    unRev = map unT0
-
-instance Reverse Tensor is (i ': js) ks ⇒  Reverse Tensor (i ': is) js ks where
-    rev = rev ∘ concat
-    unRev = unRev ∘ unConcat
 
 --------------------------------------------------------------------------------

@@ -302,6 +302,25 @@ instance IsTensor Tensor where
               splitDims A1      = (0,1)
               splitDims (A1S s) = second succ $ splitDims s
               splitDims (An s)  = first succ $ splitDims s
+    rev (Tensor sh v) =
+        let hs = reverse sh
+            zh = hs G.++ form (head v)
+            s  = fromIntegral $ product sh
+        in Tensor zh $ G.concat $
+           P.map (content ∘ (G.!) v ∘ transposeV sh) [0 .. pred s]
+    unRev (Tensor sh v) =
+        Tensor zh $ G.generate (fromIntegral $ product zh) gnr
+            where gnr i = let (q,r) = quotRem i s
+                          in content (v G.! r) G.! transposeV rh q
+                  zh = reverse rh G.++ sh
+                  s = fromIntegral $ product sh
+                  rh = form $ head v
+
+-- | Index permutation yielding the @'V.Vector'@ representation of a transposed
+-- tensor: (x^T)_i = x_(πi). The first argument is the dimensions array of the
+-- original tensor.
+transposeV ∷ U.Vector Word → Int → Int
+transposeV ds = linearize ds ∘ G.reverse ∘ unlinearize (reverse ds)
 
 -----------------------------------  IsList  -----------------------------------
 
@@ -402,28 +421,5 @@ instance IsSlicer Slicer where
 instance Sliceable Tensor where
     type Sl Tensor = Slicer
     slice (Tensor sh v) (Slicer sl) = Tensor (sliceSh sl sh) (sliceV v sh sl)
-
------------------------------------  Reverse -----------------------------------
-
-instance Reverse Tensor '[] js js where
-    rev = unT0
-    unRev = fmap unT0
-
-instance Reverse Tensor is (i ': js) ks ⇒  Reverse Tensor (i ': is) js ks where
-    rev (Tensor sh v) =
-        let zh = reverse sh G.++ form (head v)
-            s1 = fromIntegral (sh G.! 0)
-            t  = fromIntegral $ product $ tail sh
-        in Tensor zh $ G.concat
-               [ content (v G.! (i + j⋅t)) | i ← [0..pred t], j ← [0..pred s1] ]
-    unRev (Tensor sh v) =
-        Tensor zh $ G.generate (fromIntegral $ product zh) gnr
-        where gnr i = let (q,r) = quotRem i s
-                      in content (v G.! r) G.! transposeV rh q
-              zh = rh G.++ sh
-              s = fromIntegral $ product sh
-              rh = reverse $ form $ head v
-              transposeV ∷ U.Vector Word → Int → Int
-              transposeV ds = linearize ds ∘ G.reverse ∘ unlinearize ds
 
 --------------------------------------------------------------------------------
