@@ -251,10 +251,9 @@ instance IsTensor Tensor where
         let h = head es
             l = fromIntegral (product ds ⋅ h)
         in Tensor (h `cons` ds) $ G.generate l f
-        where f n = let (i, is) = quotRem n esl
+        where f n = let (i, is) = quotRem n $ fromIntegral $ product ds
                     in Tensor t $ G.slice (i ⋅ tl) tl $ content (u G.! is)
               es = form (u G.! 0)
-              esl = fromIntegral $ product es
               t = tail es
               tl = fromIntegral $ product t
     Tensor ds u `at` ix =
