@@ -13,6 +13,7 @@ import           Prelude                           hiding (concat)
 import           Prelude.Unicode
 import           Test.QuickCheck                   (Arbitrary (arbitrary))
 
+import           Data.Indexable
 import           Data.MultiIndex
 import           Data.Sliceable
 import           Data.Tensor

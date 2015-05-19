@@ -70,6 +70,8 @@ import qualified Prelude                      as P
 import           Prelude.Unicode
 import           System.Random
 
+import           Data.Indexable
+import qualified Data.Indexable               as I
 import           Data.MultiIndex              hiding (MultiIndex, fromList,
                                                toList)
 import qualified Data.MultiIndex              as M
@@ -78,7 +80,6 @@ import qualified Data.Sliceable               as S
 import           Data.Tensor                  hiding (ColumnVector, Matrix,
                                                RowVector, Slicer (..), Tensor,
                                                Vector)
-import qualified Data.Tensor                  as T
 
 
 -- | An @'IsMultiIndex'@ type optimized for indexing @'Tensor'@. It is
@@ -173,7 +174,7 @@ unsafeTensorGen ds f =
 -----------------------------------  Functor -----------------------------------
 
 instance Functor (Tensor is) where
-    fmap = T.map
+    fmap = I.map
 
 ---------------------------------  Applicative ---------------------------------
 
@@ -209,36 +210,41 @@ instance Show e => Show (Tensor i e) where
                             | x ≡ y     = match' xs ys (zs ++ [1]) (n+1)
                             | otherwise = (zs ++ ((y+1):ys),n)
 
-----------------------------------  IsTensor  ----------------------------------
+----------------------------------  Indexable ----------------------------------
 
-instance IsTensor Tensor where
+instance Indexable Tensor where
     type Index Tensor = MultiIndex
     Tensor d u ! ix = u G.! linearize d (unMultiIndex ix)
-    t0 = Tensor G.empty ∘ singleton
-    unT0 = head ∘ content
-    t1 (Tensor d u) = Tensor (1 `cons` d) u
-    unT1 (Tensor d u) = Tensor (tail d) u
-    (Tensor _ u) |: (Tensor d v) = let h = head d
-                                       t = tail d
-                                   in Tensor (succ h `cons` t) (u G.++ v)
-    unCons (Tensor d u) = let t = tail d
-                              (v, w) = splitAt (fromIntegral $ product t) u
-                          in (Tensor t v, Tensor (pred (head d) `cons` t) w)
-    gen s f = let r = fromList $ fromShape s
-              in Tensor r $ G.generate (fromIntegral $ product r)
-                                       (f ∘ MultiIndex ∘ (unlinearize r))
-    genA s f = let r = fromList $ fromShape s
-               in Tensor r <$> generateA (fromIntegral $ product r)
-                                               (f ∘ MultiIndex ∘ (unlinearize r))
-        where generateA ∷ Applicative f ⇒ Int → (Int → f a) → f (V.Vector a)
-              generateA n g | n ≡ 0     = pure G.empty
-                            | otherwise = liftA2 cons (g 0)
-                                          (generateA (n-1) (g ∘ succ))
-    genM s f = do let r = fromList $ fromShape s
-                  Tensor r `liftM` G.generateM (fromIntegral $ product r)
-                                               (f ∘ MultiIndex ∘ (unlinearize r))
+    generate = gen sing
+        where
+          gen ∷ Shape is → (MultiIndex is → e) → Tensor is e
+          gen s f = let r = fromList $ fromShape s
+                    in Tensor r $ G.generate (fromIntegral $ product r)
+                                             (f ∘ MultiIndex ∘ (unlinearize r))
+    generateA = genA sing
+        where
+          genA ∷ Applicative f ⇒ Shape is → (MultiIndex is → f e) → f (Tensor is e)
+          genA s f = let r = fromList $ fromShape s
+                     in Tensor r <$> genAV (fromIntegral $ product r)
+                                     (f ∘ MultiIndex ∘ (unlinearize r))
+          genAV ∷ Applicative f ⇒ Int → (Int → f a) → f (V.Vector a)
+          genAV n g | n ≡ 0     = pure G.empty
+                    | otherwise = liftA2 cons (g 0)
+                                       (genAV (n-1) (g ∘ succ))
+    generateM = genM sing
+        where
+          genM ∷ Monad m ⇒ Shape is → (MultiIndex is → m e) → m (Tensor is e)
+          genM s f = do let r = fromList $ fromShape s
+                        Tensor r `liftM` G.generateM (fromIntegral $ product r)
+                                         (f ∘ MultiIndex ∘ (unlinearize r))
     map f (Tensor d u) = Tensor d $ fmap f u
     ap (Tensor _ f) (Tensor d u) = Tensor d (zipWith ($) f u)
+
+-------------------------------  MultiIndexable  -------------------------------
+
+instance MultiIndexable Tensor where
+    t0 = Tensor G.empty ∘ singleton
+    unT0 = head ∘ content
     concat (Tensor ds u) =
         let h = head ds
             t = tail ds
@@ -268,6 +274,37 @@ instance IsTensor Tensor where
                               l   = fromIntegral $ product t
                           in Tensor t $
                              G.slice (i ⋅ l) l u
+    rev (Tensor sh v) =
+        let hs = reverse sh
+            zh = hs G.++ form (head v)
+            s  = fromIntegral $ product sh
+        in Tensor zh $ G.concat $
+           P.map (content ∘ (G.!) v ∘ transposeV sh) [0 .. pred s]
+    unRev (Tensor sh v) =
+        Tensor zh $ G.generate (fromIntegral $ product zh) gnr
+            where gnr i = let (q,r) = quotRem i s
+                          in content (v G.! r) G.! transposeV rh q
+                  zh = reverse rh G.++ sh
+                  s = fromIntegral $ product sh
+                  rh = form $ head v
+
+-- | Index permutation yielding the @'V.Vector'@ representation of a transposed
+-- tensor: (x^T)_i = x_(πi). The first argument is the dimensions array of the
+-- original tensor.
+transposeV ∷ U.Vector Word → Int → Int
+transposeV ds = linearize ds ∘ G.reverse ∘ unlinearize (reverse ds)
+
+----------------------------------  IsTensor  ----------------------------------
+
+instance IsTensor Tensor where
+    t1 (Tensor d u) = Tensor (1 `cons` d) u
+    unT1 (Tensor d u) = Tensor (tail d) u
+    (Tensor _ u) |: (Tensor d v) = let h = head d
+                                       t = tail d
+                                   in Tensor (succ h `cons` t) (u G.++ v)
+    unCons (Tensor d u) = let t = tail d
+                              (v, w) = splitAt (fromIntegral $ product t) u
+                          in (Tensor t v, Tensor (pred (head d) `cons` t) w)
     append sh (Tensor d x) (Tensor e y) =
         Tensor (take i d G.++ f) (G.generate len gnr)
         where f ∷ U.Vector Word
@@ -301,25 +338,6 @@ instance IsTensor Tensor where
               splitDims A1      = (0,1)
               splitDims (A1S s) = second succ $ splitDims s
               splitDims (An s)  = first succ $ splitDims s
-    rev (Tensor sh v) =
-        let hs = reverse sh
-            zh = hs G.++ form (head v)
-            s  = fromIntegral $ product sh
-        in Tensor zh $ G.concat $
-           P.map (content ∘ (G.!) v ∘ transposeV sh) [0 .. pred s]
-    unRev (Tensor sh v) =
-        Tensor zh $ G.generate (fromIntegral $ product zh) gnr
-            where gnr i = let (q,r) = quotRem i s
-                          in content (v G.! r) G.! transposeV rh q
-                  zh = reverse rh G.++ sh
-                  s = fromIntegral $ product sh
-                  rh = form $ head v
-
--- | Index permutation yielding the @'V.Vector'@ representation of a transposed
--- tensor: (x^T)_i = x_(πi). The first argument is the dimensions array of the
--- original tensor.
-transposeV ∷ U.Vector Word → Int → Int
-transposeV ds = linearize ds ∘ G.reverse ∘ unlinearize (reverse ds)
 
 -----------------------------------  IsList  -----------------------------------
 

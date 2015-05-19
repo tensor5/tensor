@@ -41,7 +41,8 @@ Library
                        vector                ==0.10.*
   Build-Tools:         ghc >= 7.8.1
   GHC-Options:         -Wall
-  Exposed-Modules:     Data.MultiIndex
+  Exposed-Modules:     Data.Indexable
+                       Data.MultiIndex
                        Data.Sliceable
                        Data.Tensor
                        Data.Tensor.Vector

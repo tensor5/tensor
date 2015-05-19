@@ -32,12 +32,9 @@
 module Data.Tensor
     ( IsTensor(..)
     , Append(..), AppendI(..)
-    , generate, generateM
-    , castTensor
     , TensorException(..)
     , vector2RowVector
     , rowVector2Vector
-    , Reverse(..), ReverseI(..)
     , Tensor(..)
     , Vector, Matrix
     , ColumnVector, RowVector
@@ -49,8 +46,6 @@ import           Control.Arrow
 import           Control.DeepSeq
 import           Control.Exception            (Exception)
 import           Control.Exception            (throw)
-import           Control.Monad                (liftM)
-import           Data.Functor.Identity
 import           Data.Singletons
 import           Data.Singletons.Prelude.List hiding (Reverse)
 import           Data.Typeable
@@ -59,19 +54,16 @@ import           Prelude                      hiding (concat, map)
 import           Prelude.Unicode
 import           System.Random                hiding (split)
 
+import           Data.Indexable
 import           Data.MultiIndex              hiding (fromList, toList)
 import           Data.Sliceable               hiding (AllCons, NilS, Slicer)
 import qualified Data.Sliceable               as S
 
 
 -- | Class of types isomorphic to @'Tensor'@.
-class IsMultiIndex (Index t) ⇒ IsTensor (t ∷ [PI] → * → *) where
-    type Index t ∷ [PI] → *
-    (!) ∷ t is e → Index t is → e
-    t0 ∷ e → t '[] e
-    t0 = fromTensor ∘ T0
-    unT0 ∷ t '[] e → e
-    unT0 t = t ! nil
+class ( IsMultiIndex (Index t)
+      , MultiIndexable t
+      ) ⇒ IsTensor (t ∷ [PI] → * → *) where
     t1 ∷ t is e → t ('One ': is) e
     unT1 ∷ t ('One ': is) e → t is e
     (|:) ∷ t is e → t (n ': is) e → t ('S n ': is) e
@@ -87,18 +79,6 @@ class IsMultiIndex (Index t) ⇒ IsTensor (t ∷ [PI] → * → *) where
               toT (SCons SOne   sh) = T1 ∘ toT sh ∘ unT1
               toT (SCons (SS i) sh) =
                   uncurry (:|) ∘ (toT sh *** toT (SCons i sh)) ∘ unCons
-    gen ∷ Shape is → (Index t is → e) → t is e
-    gen s f = runIdentity $ genA s (Identity ∘ f)
-    genA ∷ Applicative f ⇒ Shape is → (Index t is → f e) → f (t is e)
-    genM ∷ Monad m ⇒ Shape is → (Index t is → m e) → m (t is e)
-    map ∷ (e → f) → t is e → t is f
-    ap ∷ t is (e → f) → t is e → t is f
-    concat ∷ t (i ': is) (t js e) → t is (t (i ': js) e)
-    unConcat ∷ t is (t (i ': js) e) → t (i ': is) (t js e)
-    at ∷ t (i ': is) e → Index t is → t '[i] e
-    ta ∷ Index t '[i] → t (i ': is) e → t is e
-    transpose ∷ t '[i, j] e → t '[j, i] e
-    transpose = unT0 ∘ concat ∘ concat ∘ map t0
     -- |
     --
     -- @'split' n ∘ 'append' n ≡ '(,)'@
@@ -107,35 +87,6 @@ class IsMultiIndex (Index t) ⇒ IsTensor (t ∷ [PI] → * → *) where
     --
     -- @'uncurry' ('append' n) ∘ 'split' n ≡ 'id'@
     split ∷ AppendI n is js ks ⇒ SPI n → t ks e → (t is e, t js e)
-    -- | @'concat'@ until the outside tensor has rank 0 and then @'unT0'@.
-    --
-    -- @'rev' ≡ 'unT0' ∘ 'concat' ∘ … ∘ 'concat'@
-    rev ∷ ReverseI is js ks ⇒ t is (t js e) → t ks e
-    -- | @'unConcat'@ until the inside tensors has rank 0 and then @'unT0'@ on
-    -- the inside tensors.
-    --
-    -- @'unRev' ≡ 'map' 'unT0' ∘ 'unConcat' ∘ … ∘ 'unConcat'@
-    unRev ∷ ReverseI is js ks ⇒ t js (t is e) → t ks e
-
-
--- | Generate a tensor from an (index → element) map.
-generate ∷ (SingI is, IsTensor t) ⇒ (Index t is → e) → t is e
-generate = gen sing
-
--- | Same as @'generate'@ but works inside a @'Monad'@.
-generateM ∷ (Monad m, SingI is, IsTensor t) ⇒ (Index t is → m e) → m (t is e)
-generateM = genM sing
-
-
--- | @'castTensor' f g t = 'generate' (g ∘ ('!') t ∘ f)@
-castTensor ∷ ( IsTensor t1
-             , IsTensor t2
-             , SingI js
-             ) ⇒ (Index t2 js → Index t1 is)
-               → (e → f)
-               → t1 is e
-               → t2 js f
-castTensor f g t = generate (g ∘ (!) t ∘ f)
 
 
 -- | When a tensor is made instance of @'IsList'@ this @'Exception'@ should be
@@ -174,23 +125,6 @@ instance AppendI 'One (i ': is) (j ': is) (k ': is) ⇒
 
 instance AppendI n is js ks ⇒ AppendI ('S n) (i ': is) (i ': js) (i ': ks) where
     appendSing = An appendSing
-
-
--- | Expresses the possible ways to reverse a list concatenating to a second
--- list.
-data Reverse ∷ [χ] → [χ] → [χ] → * where
-    R0 ∷ Reverse '[] js js
-    R1 ∷ Reverse is (i ': js) ks → Reverse (i ': is) js ks
-
--- | Class for implicit @'Reverse'@ parameter.
-class ReverseI is js ks | is js → ks where
-    reverseSing ∷ Reverse is js ks
-
-instance ReverseI '[] js js where
-    reverseSing = R0
-
-instance ReverseI is (i ': js) ks ⇒ ReverseI (i ': is) js ks where
-    reverseSing = R1 reverseSing
 
 --------------------------------------------------------------------------------
 
@@ -250,46 +184,34 @@ instance Show e ⇒  Show (Tensor is e) where
     showsPrec n (t :| ts) =
         ('[':) ∘ showsPrec n t ∘ (',':) ∘ tail ∘ showsPrec n ts
 
-----------------------------------  IsTensor  ----------------------------------
+----------------------------------  Indexable ----------------------------------
 
-instance IsTensor Tensor where
+instance Indexable Tensor where
     type Index Tensor = MultiIndex
     T0 e      ! _           = e
     T1 t      ! OneCons is  = t ! is
     (t :| _)  ! OneCons is  = t ! is
     (_ :| ts) ! HeadSucc is = ts ! is
-    t0 = T0
-    unT0 (T0 e) = e
-    t1 = T1
-    unT1 (T1 t) = t
-    (|:) = (:|)
-    unCons (t :| ts) = (t, ts)
-    fromTensor = id
-    toTensor = id
-    gen SNil              f = T0 $ f Nil
-    gen (SCons SOne   is) f = T1 $ gen is (f ∘ OneCons)
-    gen (SCons (SS i) is) f = gen is (f ∘ OneCons) :|
-                              gen (SCons i is) (f ∘ HeadSucc)
-    genA SNil              f = liftA T0 $ f Nil
-    genA (SCons SOne   is) f = liftA T1 $ genA is (f ∘ OneCons)
-    genA (SCons (SS i) is) f =
-        liftA2 (:|) (genA is (f ∘ OneCons)) (genA (SCons i is) (f ∘ HeadSucc))
-    genM SNil              f = liftM T0 $ f Nil
-    genM (SCons SOne   is) f = liftM T1 $ genM is (f ∘ OneCons)
-    genM (SCons (SS i) is) f = do t  ← genM is (f ∘ OneCons)
-                                  ts ← genM (SCons i is) (f ∘ HeadSucc)
-                                  return (t :| ts)
+    generateA = genA sing
+        where
+          genA ∷ Applicative f ⇒ Shape is → (MultiIndex is → f e) → f (Tensor is e)
+          genA SNil              f = liftA T0 $ f Nil
+          genA (SCons SOne   is) f = liftA T1 $ genA is (f ∘ OneCons)
+          genA (SCons (SS i) is) f =
+              liftA2 (:|) (genA is (f ∘ OneCons))
+                          (genA (SCons i is) (f ∘ HeadSucc))
     map f (T0 e)    = T0 $ f e
     map f (T1 t)    = T1 $ map f t
     map f (t :| ts) = map f t :| map f ts
     ap (T0 f)    (T0 e)    = T0 (f e)
     ap (T1 f)    (T1 t)    = T1 $ ap f t
     ap (f :| fs) (t :| ts) = ap f t :| ap fs ts
-    T1 t      `at` is = T1 $ T0 (t ! is)
-    (t :| ts) `at` is = T0 (t ! is) :| (ts `at` is)
-    OneCons _   `ta` T1 t      = t
-    OneCons _   `ta` (t :| _)  = t
-    HeadSucc is `ta` (_ :| ts) = is `ta` ts
+
+-------------------------------  MultiIndexable  -------------------------------
+
+instance MultiIndexable Tensor where
+    t0 = T0
+    unT0 (T0 e) = e
     concat (T1 t)    = map T1 t
     concat (t :| ts) = (:|) `map` t `ap` (concat ts)
     unConcat (T0 (T1 t))    = T1 $ T0 t
@@ -304,6 +226,29 @@ instance IsTensor Tensor where
                     → Tensor (i ': 'S j ': is) e
               T1 u      |:: T1 v      = T1 (u :| v)
               (u :| us) |:: (v :| vs) = (u :| v) :| (us |:: vs)
+    T1 t      `at` is = T1 $ T0 (t ! is)
+    (t :| ts) `at` is = T0 (t ! is) :| (ts `at` is)
+    OneCons _   `ta` T1 t      = t
+    OneCons _   `ta` (t :| _)  = t
+    HeadSucc is `ta` (_ :| ts) = is `ta` ts
+    rev = rev' reverseSing
+        where rev' ∷ Reverse is js ks → Tensor is (Tensor js e) → Tensor ks e
+              rev' R0     = unT0
+              rev' (R1 r) = rev' r ∘ concat
+    unRev = unRev' reverseSing
+        where unRev' ∷ Reverse is js ks → Tensor js (Tensor is e) → Tensor ks e
+              unRev' R0     = fmap unT0
+              unRev' (R1 r) = unRev' r ∘ unConcat
+
+----------------------------------  IsTensor  ----------------------------------
+
+instance IsTensor Tensor where
+    t1 = T1
+    unT1 (T1 t) = t
+    (|:) = (:|)
+    unCons (t :| ts) = (t, ts)
+    fromTensor = id
+    toTensor = id
     append = append' appendSing
         where append' ∷ Append n is js ks
                       → SPI n → Tensor is e → Tensor js e → Tensor ks e
@@ -326,14 +271,6 @@ instance IsTensor Tensor where
                   let (u,  v ) = split' s      n      t
                       (us, vs) = split' (An s) (SS n) ts
                   in (u :| us, v :| vs)
-    rev = rev' reverseSing
-        where rev' ∷ Reverse is js ks → Tensor is (Tensor js e) → Tensor ks e
-              rev' R0     = unT0
-              rev' (R1 r) = rev' r ∘ concat
-    unRev = unRev' reverseSing
-        where unRev' ∷ Reverse is js ks → Tensor js (Tensor is e) → Tensor ks e
-              unRev' R0     = fmap unT0
-              unRev' (R1 r) = unRev' r ∘ unConcat
 
 -----------------------------------  IsList  -----------------------------------
 
