@@ -162,19 +162,13 @@ instance Functor (Tensor is) where
 
 ---------------------------------  Applicative ---------------------------------
 
-instance Applicative (Tensor '[]) where
-    pure e = T0 e
-    T0 f <*> T0 e = T0 (f e)
-
-instance Applicative (Tensor is) ⇒ Applicative (Tensor ('One ': is)) where
-    pure e = T1 (pure e)
-    T1 f <*> T1 t = T1 (f <*> t)
-
-instance ( Applicative (Tensor is)
-         , Applicative (Tensor (i ': is))
-         ) ⇒ Applicative (Tensor ('S i ': is)) where
-    pure e = pure e :| pure e
-    (f :| fs) <*> (t :| ts) = (f <*> t) :| (fs <*> ts)
+instance SingI is ⇒ Applicative (Tensor is) where
+    pure = p sing
+        where p ∷ Shape js → e → Tensor js e
+              p SNil              = T0
+              p (SCons SOne   sh) = T1 ∘ p sh
+              p (SCons (SS i) sh) = uncurry (:|) ∘ (p sh &&& p (SCons i sh))
+    (<*>) = ap
 
 ------------------------------------  Show  ------------------------------------
 
@@ -274,29 +268,24 @@ instance IsTensor Tensor where
 
 -----------------------------------  IsList  -----------------------------------
 
-instance IsList (Tensor '[] e) where
-    type Item (Tensor '[] e) = e
-    fromList [e] = T0 e
-    fromList _   = throw WrongListLength
-    toList (T0 e) = [e]
-
-instance IsList (Tensor is e) ⇒ IsList (Tensor ('One ': is) e) where
-    type Item (Tensor ('One ': is) e) = Item (Tensor is e)
-    fromList = T1 ∘ fromList
-    toList (T1 t) = toList t
-
-instance ( SingI i
-         , SingI is
-         , IsList (Tensor is e)
-         , IsList (Tensor (i ': is) e)
-         , Item (Tensor is e) ~ Item (Tensor (i ': is) e)
-         ) ⇒ IsList (Tensor ('S i ': is) e) where
-    type Item (Tensor ('S i ': is) e) = Item (Tensor is e)
-    fromList l = let s = fromShape (sing ∷ Shape ('S i ': is))
-                 in if length l ≡ product s
-                    then uncurry (:|) $ (fromList *** fromList) $ splitAt (product $ tail s) l
-                    else throw WrongListLength
-    toList (t :| ts) = toList t ++ toList ts
+instance SingI is ⇒ IsList (Tensor is e) where
+    type Item (Tensor is e) = e
+    fromList = f sing
+        where f ∷ Shape js → [e] -> Tensor js e
+              f SNil              [e] = T0 e
+              f SNil              _   = throw WrongListLength
+              f (SCons SOne is)   l   = T1 $ f is l
+              f (SCons (SS i) is) l   =
+                  let a = fromPI (SS i)
+                      b = product $ fromShape is
+                  in if length l ≡ a ⋅ b
+                     then uncurry (:|) $ (f is *** f (SCons i is)) $ splitAt b l
+                     else throw WrongListLength
+    toList = toList'
+        where toList' ∷ Tensor js e → [e]
+              toList' (T0 e) = [e]
+              toList' (T1 t) = toList' t
+              toList' (t :| ts) = toList' t ++ toList' ts
 
 -----------------------------------  NFData  -----------------------------------
 
@@ -307,23 +296,25 @@ instance NFData e ⇒ NFData (Tensor is e) where
 
 -----------------------------------  Random  -----------------------------------
 
-instance Random e ⇒ Random (Tensor '[] e) where
-    randomR (T0 a, T0 b) = first T0 ∘ randomR (a, b)
-    random = first T0 ∘ random
-
-instance Random (Tensor is e) ⇒ Random (Tensor ('One ': is) e) where
-    randomR (T1 t, T1 u) = first T1 ∘ randomR (t, u)
-    random = first T1 ∘ random
-
-instance ( Random (Tensor is e)
-         , Random (Tensor (i ': is) e)
-         ) ⇒ Random (Tensor ('S i ': is) e) where
-    randomR (t :| ts, u :| us) g = let (v,  g1) = randomR (t, u) g
-                                       (vs, g2) = randomR (ts, us) g1
-                                   in (v :| vs, g2)
-    random g = let (t,  g1) = random g
-                   (ts, g2) = random g1
-               in (t :| ts, g2)
+instance (Random e, SingI is) ⇒ Random (Tensor is e) where
+    randomR = r sing
+        where r ∷ RandomGen g ⇒
+                Shape js → (Tensor js e, Tensor js e) → g → (Tensor js e, g)
+              r SNil              (T0 a, T0 b)       g =
+                  first T0 $ randomR (a, b) g
+              r (SCons SOne   is) (T1 t, T1 u)       g =
+                  first T1 $ r is (t, u) g
+              r (SCons (SS i) is) (t :| ts, u :| us) g =
+                  let (v,  g1) = r is (t, u) g
+                      (vs, g2) = r (SCons i is) (ts, us) g1
+                  in (v :| vs, g2)
+    random = r sing
+        where r ∷ RandomGen g ⇒ Shape js → g → (Tensor js e, g)
+              r SNil              g = first T0 $ random g
+              r (SCons SOne   is) g = first T1 $ r is g
+              r (SCons (SS i) is) g = let (t,  g1) = r is g
+                                          (ts, g2) = r (SCons i is) g1
+                                      in (t :| ts, g2)
 
 ----------------------------------  Sliceable ----------------------------------
 
