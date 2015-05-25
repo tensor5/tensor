@@ -179,8 +179,8 @@ instance Functor (Tensor is) where
 ---------------------------------  Applicative ---------------------------------
 
 instance SingI is ⇒ Applicative (Tensor is) where
-    pure e = let r = fromList $ fromShape (sing ∷ Shape is)
-             in Tensor r $ G.replicate (fromIntegral $ product r) e
+    pure = Tensor r ∘ G.replicate (fromIntegral $ product r)
+        where r = fromList $ fromShape (sing ∷ Shape is)
     (<*>) = ap
 
 ------------------------------------  Show  ------------------------------------
@@ -362,21 +362,20 @@ instance (Random e, SingI is) ⇒ Random (Tensor is e) where
         let l' = toList $ content l
             h' = toList $ content h
         in first (Tensor (form l) ∘ fromList) ∘ randomListR (l', h')
+        where randomListR ∷ (Random e, RandomGen g) ⇒ ([e], [e]) → g → ([e], g)
+              randomListR ([]  , _   ) = (,) []
+              randomListR (_   , []  ) = (,) []
+              randomListR (a:as, b:bs) = (\(x, (y, z)) → (x : y, z)) ∘
+                                         second (randomListR (as, bs)) ∘
+                                                randomR (a, b)
     random = let s = (sing ∷ Shape is)
                  ds = fromList $ fromShape s
                  l = product ds
              in first (Tensor ds ∘ fromList) ∘ randomsWithLength l
-        where randomsWithLength 0 g = ([], g)
-              randomsWithLength d g = let (x , g1) = random g
-                                          (xs, g2) = randomsWithLength (d-1) g1
-                                      in (x:xs, g2)
-
-randomListR ∷ (Random a, RandomGen g) ⇒ ([a], [a]) → g → ([a], g)
-randomListR ([]  , _   ) g = ([], g)
-randomListR (_   , []  ) g = ([], g)
-randomListR (l:ls, h:hs) g = let (x , g1) = randomR (l, h) g
-                                 (xs, g2) = randomListR (ls, hs) g1
-                             in (x:xs, g2)
+        where randomsWithLength ∷ (Random e, RandomGen g) ⇒ Word → g → ([e], g)
+              randomsWithLength 0 = (,) []
+              randomsWithLength d = (\(x, (y, z)) → (x : y, z)) ∘
+                                    second (randomsWithLength (d-1)) ∘ random
 
 ----------------------------------  Sliceable ----------------------------------
 

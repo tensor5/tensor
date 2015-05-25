@@ -300,21 +300,17 @@ instance (Random e, SingI is) ⇒ Random (Tensor is e) where
     randomR = r sing
         where r ∷ RandomGen g ⇒
                 Shape js → (Tensor js e, Tensor js e) → g → (Tensor js e, g)
-              r SNil              (T0 a, T0 b)       g =
-                  first T0 $ randomR (a, b) g
-              r (SCons SOne   is) (T1 t, T1 u)       g =
-                  first T1 $ r is (t, u) g
-              r (SCons (SS i) is) (t :| ts, u :| us) g =
-                  let (v,  g1) = r is (t, u) g
-                      (vs, g2) = r (SCons i is) (ts, us) g1
-                  in (v :| vs, g2)
+              r SNil              (T0 a, T0 b)       = first T0 ∘ randomR (a, b)
+              r (SCons SOne   is) (T1 t, T1 u)       = first T1 ∘ r is (t, u)
+              r (SCons (SS i) is) (t :| ts, u :| us) =
+                  (\(x, (y, z)) → (x :| y, z)) ∘
+                  second (r (SCons i is) (ts, us)) ∘ r is (t, u)
     random = r sing
         where r ∷ RandomGen g ⇒ Shape js → g → (Tensor js e, g)
-              r SNil              g = first T0 $ random g
-              r (SCons SOne   is) g = first T1 $ r is g
-              r (SCons (SS i) is) g = let (t,  g1) = r is g
-                                          (ts, g2) = r (SCons i is) g1
-                                      in (t :| ts, g2)
+              r SNil              = first T0 ∘ random
+              r (SCons SOne   is) = first T1 ∘ r is
+              r (SCons (SS i) is) =
+                  (\(x, (y, z)) → (x :| y, z)) ∘ second (r (SCons i is)) ∘ r is
 
 ----------------------------------  Sliceable ----------------------------------
 
