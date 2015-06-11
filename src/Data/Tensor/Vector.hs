@@ -39,6 +39,7 @@ module Data.Tensor.Vector
     , fromList
 --    , fromVector
 
+    , module Data.Indexable
     , module Data.MultiIndex
     , module Data.Sliceable
     , module Data.Tensor
