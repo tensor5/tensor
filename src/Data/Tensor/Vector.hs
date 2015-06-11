@@ -90,6 +90,8 @@ newtype MultiIndex (is ∷ [PI]) = MultiIndex
                                     -- @'MultiIndex'@.
     } deriving Eq
 
+-- | Standard total order on a @'MultiIndex'@ of length 1 (@[i] ≤ [j]@ iff @i ≤
+-- j@). Methods have @O(1)@ complexity.
 instance Ord (MultiIndex '[i]) where
     compare = compare `on` (head ∘ unMultiIndex)
 
@@ -115,7 +117,7 @@ succHead = imap (\i → if i ≡ 0 then succ else id)
 
 
 -- | An @'IsTensor'@ type, internally represented as a @'V.Vector'@. It features
--- O(1) @('T.!')@.
+-- @O(r)@ @('I.!')@.
 data Tensor (is ∷ [PI]) e = Tensor
     { form    ∷ U.Vector Word
     , content ∷ V.Vector e
@@ -174,11 +176,14 @@ unsafeTensorGen ds f =
 
 -----------------------------------  Functor -----------------------------------
 
+-- | @'fmap' = 'I.map'@.
 instance Functor (Tensor is) where
     fmap = I.map
 
 ---------------------------------  Applicative ---------------------------------
 
+-- | @'pure' a@ yields a @'Tensor'@ with all components equal to @a@. @'<*>'@
+-- applies the @'Tensor'@ of functions componentwise.
 instance SingI is ⇒ Applicative (Tensor is) where
     pure = Tensor r ∘ G.replicate (fromIntegral $ product r)
         where r = fromList $ fromShape (sing ∷ Shape is)
@@ -187,6 +192,9 @@ instance SingI is ⇒ Applicative (Tensor is) where
 ------------------------------------  Show  ------------------------------------
 
 instance Show e => Show (Tensor i e) where
+-- | Rank 0 @'Tensor'@s are shown as a single element, rank 1 as lists, rank 2
+-- as lists of lists, and so on, using [row-major
+-- order](http://en.wikipedia.org/wiki/Row-major_order).
     showsPrec _ (Tensor ds v) =
         let sd = reverse ds
             l = length v
@@ -213,6 +221,7 @@ instance Show e => Show (Tensor i e) where
 
 ----------------------------------  Indexable ----------------------------------
 
+-- | @('I.!')@ has @O(r)@ complexity.
 instance Indexable Tensor where
     type Index Tensor = MultiIndex
     Tensor d u ! ix = u G.! linearize d (unMultiIndex ix)
@@ -243,6 +252,8 @@ instance Indexable Tensor where
 
 -------------------------------  MultiIndexable  -------------------------------
 
+-- | Methods are usually implemented using @'G.generate'@ to produce the
+-- underlying @'V.Vector'@.
 instance MultiIndexable Tensor where
     t0 = Tensor G.empty ∘ singleton
     unT0 = head ∘ content
@@ -297,6 +308,8 @@ transposeV ds = linearize ds ∘ G.reverse ∘ unlinearize (reverse ds)
 
 ----------------------------------  IsTensor  ----------------------------------
 
+-- | @'append'@ uses @'G.generate'@ to produce the underlying @'V.Vector'@,
+-- @'split'@ uses @'imap'@.
 instance IsTensor Tensor where
     t1 (Tensor d u) = Tensor (1 `cons` d) u
     unT1 (Tensor d u) = Tensor (tail d) u
@@ -342,6 +355,8 @@ instance IsTensor Tensor where
 
 -----------------------------------  IsList  -----------------------------------
 
+-- | The list representation of @'Tensor'@ uses [row-major
+-- order](http://en.wikipedia.org/wiki/Row-major_order).
 instance SingI is ⇒ IsList (Tensor is e) where
     type Item (Tensor is e) = e
     fromList l = let s = (sing ∷ Shape is)
@@ -353,11 +368,13 @@ instance SingI is ⇒ IsList (Tensor is e) where
 
 -----------------------------------  NFData  -----------------------------------
 
+-- | Evaluate the underlying @'V.Vector'@.
 instance NFData e ⇒ NFData (Tensor is e) where
     rnf (Tensor d u) = rnf d `seq` rnf u
 
 -----------------------------------  Random  -----------------------------------
 
+-- | Random @'Tensor'@ with independent and identically distributed components.
 instance (Random e, SingI is) ⇒ Random (Tensor is e) where
     randomR (l, h) =
         let l' = toList $ content l
@@ -435,6 +452,8 @@ instance IsSlicer Slicer where
                                      then Just ∘ pred ∘ fromJust
                                      else id)
 
+-- | Slice a @'Tensor'@ using @'G.generate'@ with an appropriate index selection
+-- function on the underlying @'V.Vector'@.
 instance Sliceable Tensor where
     type Sl Tensor = Slicer
     slice (Tensor sh v) (Slicer sl) = Tensor (sliceSh sl sh) (sliceV v sh sl)

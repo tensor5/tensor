@@ -25,6 +25,12 @@
 -- integers ranging from 1 to a preset maximum which is encoded in the parameter
 -- of @'MultiIndex'@.
 --
+-- The shape of a multiindex can be visualized as a multi dimensional
+-- parallelepiped: a shape @[d₁,…,dᵣ]@ is a parallelepiped of /dimension/ @r@
+-- where the side along the @i@th dimension has size @dᵢ@, that is why the
+-- numbers @dᵢ@ are called /sizes/ of the multiindex. This notation will also be
+-- used for tensors (see "Data.Tensor").
+--
 --------------------------------------------------------------------------------
 
 module Data.MultiIndex where
@@ -41,6 +47,7 @@ data PI = One
         | S PI
           deriving Eq
 
+-- | Singleton type-level positive integer.
 data instance Sing (n ∷ PI) where
     SOne ∷ Sing 'One
     SS   ∷ Sing n → Sing ('S n)
@@ -58,9 +65,11 @@ fromPI ∷ Num a ⇒ SPI n → a
 fromPI SOne   = 1
 fromPI (SS n) = 1 + fromPI n
 
+-- | @'sing' = 'SOne'@.
 instance SingI 'One where
     sing = SOne
 
+-- | @'sing' = 'SS' 'sing'@.
 instance SingI n ⇒ SingI ('S n) where
     sing = SS sing
 
@@ -116,6 +125,7 @@ data MultiIndex ∷ [PI] → * where
     OneCons  ∷ MultiIndex is → MultiIndex (i ': is)
     HeadSucc ∷ MultiIndex (i ': is) → MultiIndex ('S i ': is)
 
+-- | Standard equality.
 instance Eq (MultiIndex is) where
     Nil         == Nil         = True
     Nil         == _           = False
@@ -124,15 +134,19 @@ instance Eq (MultiIndex is) where
     HeadSucc is == HeadSucc js = is ≡ js
     HeadSucc _  == _           = False
 
+-- | Standard total order on a @'MultiIndex'@ of length 1 (@[i] ≤ [j]@ iff @i ≤
+-- j@).
 instance Ord (MultiIndex '[i]) where
     compare (OneCons  _) (OneCons  _) = EQ
     compare (OneCons  _) (HeadSucc _) = LT
     compare (HeadSucc _) (OneCons  _) = GT
     compare (HeadSucc i) (HeadSucc j) = compare i j
 
+-- | A @'MultiIndex'@ is shown as a list of integers.
 instance Show (MultiIndex is) where
     showsPrec n is = showsPrec n (toList is ∷ [Integer])
 
+-- | Trivial instance (@'fromMultiIndex' = 'id'@, @'toMultiIndex' = 'id'@).
 instance IsMultiIndex MultiIndex where
     nil = Nil
     oneCons = OneCons

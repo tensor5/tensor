@@ -27,6 +27,18 @@
 -- called @'Tensor'@, plus a class @'IsTensor'@ of types isomorphic to
 -- @'Tensor'@ that can be used to define more efficient custom implementations.
 --
+-- In this and other modules we use the following notation:
+--
+--   1. Dimension of a tensor: the total number of elements in the
+--   array. Ususally denoted with the letter @d@.
+--
+--   2. Rank of a tensor: the dimension of the array; this is the same as the
+--   length of the multiindex. Usually denoted with the letter @r@.
+--
+--   3. In a tensor of rank @r@ the sizes of the array are denoted with the
+--   letter @d@ and a subscript, for example a tensor with sizes @[d₁,…,dᵣ]@ has
+--   dimension @d₁⋅…⋅dᵣ@.
+--
 --------------------------------------------------------------------------------
 
 module Data.Tensor where
@@ -84,6 +96,7 @@ class ( IsMultiIndex (Index t)
 data TensorException = WrongListLength
                        deriving (Eq, Show, Typeable)
 
+-- | Default instance.
 instance Exception TensorException
 
 -- | Transform a vector into a one-row matrix.
@@ -106,13 +119,20 @@ data Append ∷ PI → [PI] → [PI] → [PI] → * where
 class AppendI (n ∷ PI) (is ∷ [PI]) (js ∷ [PI]) (ks ∷ [PI]) | n is js → ks where
     appendSing ∷ Append n is js ks
 
+-- | Appending @1 : is@ and @i : is@ at the first component results in @(i+1) :
+-- is@ (@'appendSing' = 'A1'@).
 instance AppendI 'One ('One ': is) (i ': is) ('S i ': is) where
     appendSing = A1
 
+-- | To append @(i+1) : is@ and @j : is@ at the first component, append @i : is@
+-- and @j : is@ and increase the first component by 1 (@'appendSing' = 'A1S'
+-- 'appendSing'@).
 instance AppendI 'One (i ': is) (j ': is) (k ': is) ⇒
     AppendI 'One ('S i ': is) (j ': is) ('S k ': is) where
     appendSing = A1S appendSing
 
+-- | To append @i : is@ and @i : js@ at the (n+1)-th component, append @is@ and
+-- @js@ at the n-th component and cons @i@ (@'appendSing' = 'An' 'appendSing'@).
 instance AppendI n is js ks ⇒ AppendI ('S n) (i ': is) (i ': js) (i ': ks) where
     appendSing = An appendSing
 
@@ -140,6 +160,7 @@ type RowVector i = Matrix 'One i
 
 -------------------------------------  Eq  -------------------------------------
 
+-- | Standard equality.
 instance Eq e ⇒ Eq (Tensor is e) where
     T0 e      == T0 f      = e ≡ f
     T1 t      == T1 u      = t ≡ u
@@ -147,11 +168,14 @@ instance Eq e ⇒ Eq (Tensor is e) where
 
 -----------------------------------  Functor -----------------------------------
 
+-- | @'fmap' = 'map'@.
 instance Functor (Tensor is) where
     fmap = map
 
 ---------------------------------  Applicative ---------------------------------
 
+-- | @'pure' a@ yields a @'Tensor'@ with all components equal to @a@. @'<*>'@
+-- applies the @'Tensor'@ of functions componentwise.
 instance SingI is ⇒ Applicative (Tensor is) where
     pure = p sing
         where p ∷ Shape js → e → Tensor js e
@@ -163,6 +187,9 @@ instance SingI is ⇒ Applicative (Tensor is) where
 ------------------------------------  Show  ------------------------------------
 
 instance Show e ⇒  Show (Tensor is e) where
+-- | Rank 0 @'Tensor'@s are shown as a single element, rank 1 as lists, rank 2
+-- as lists of lists, and so on, using [row-major
+-- order](http://en.wikipedia.org/wiki/Row-major_order).
     showsPrec n (T0 e)    = showsPrec n e
     showsPrec n (T1 t)    = ('[':) ∘ showsPrec n t ∘ (']':)
     showsPrec n (t :| ts) =
@@ -170,6 +197,7 @@ instance Show e ⇒  Show (Tensor is e) where
 
 ----------------------------------  Indexable ----------------------------------
 
+-- | @('!')@ has @O(d)@ complexity.
 instance Indexable Tensor where
     type Index Tensor = MultiIndex
     T0 e      ! _           = e
@@ -193,6 +221,8 @@ instance Indexable Tensor where
 
 -------------------------------  MultiIndexable  -------------------------------
 
+-- | @'t0' = 'T0'@, @'unT0' ('T0' e) = e@. Other methods are recursively
+-- defined.
 instance MultiIndexable Tensor where
     t0 = T0
     unT0 (T0 e) = e
@@ -226,6 +256,7 @@ instance MultiIndexable Tensor where
 
 ----------------------------------  IsTensor  ----------------------------------
 
+-- | Trivial instance (@'fromTensor' = 'id'@, @'toTensor' = 'id'@).
 instance IsTensor Tensor where
     t1 = T1
     unT1 (T1 t) = t
@@ -258,6 +289,8 @@ instance IsTensor Tensor where
 
 -----------------------------------  IsList  -----------------------------------
 
+-- | The list representation of @'Tensor'@ uses [row-major
+-- order](http://en.wikipedia.org/wiki/Row-major_order).
 instance SingI is ⇒ IsList (Tensor is e) where
     type Item (Tensor is e) = e
     fromList = f sing
@@ -279,6 +312,7 @@ instance SingI is ⇒ IsList (Tensor is e) where
 
 -----------------------------------  NFData  -----------------------------------
 
+-- | Recursively evaluate the @'Tensor'@.
 instance NFData e ⇒ NFData (Tensor is e) where
     rnf (T0 e)    = rnf e
     rnf (T1 t)    = rnf t
@@ -286,6 +320,7 @@ instance NFData e ⇒ NFData (Tensor is e) where
 
 -----------------------------------  Random  -----------------------------------
 
+-- | Random @'Tensor'@ with independent and identically distributed components.
 instance (Random e, SingI is) ⇒ Random (Tensor is e) where
     randomR = r sing
         where r ∷ RandomGen g ⇒
@@ -315,6 +350,7 @@ data Slicer ∷ [PI] → [Maybe PI] → [PI] → * where
     HeadSuccSl ∷ Slicer (i ': is) ('Just i ': js) ks
                → Slicer ('S i ': is) ('Just ('S i) ': js) ks
 
+-- | Trivial instance.
 instance IsSlicer Slicer where
     nilS = NilS
     allCons = AllCons
@@ -328,6 +364,7 @@ instance IsSlicer Slicer where
                      → S.Slicer ('S i ': is) ('Just ('S i) ': js) ks
               bumpSl (i :& s) = HeadSucc i :& s
 
+-- | Recursively defined slicing.
 instance Sliceable Tensor where
     type Sl Tensor = Slicer
     slice (T0 e) NilS = T0 e

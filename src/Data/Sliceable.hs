@@ -81,6 +81,7 @@ class IsSlicer (s ∷ [χ] → [Maybe χ] → [χ] → *) where
     fromSlicer (k :& sl) = k & fromSlicer sl
     toSlicer ∷ SlicerShape is js ks → s is js ks → Slicer is js ks
 
+-- | Trivial instance (@'fromSlicer' = 'id'@, @'toSlicer' _ = 'id'@).
 instance IsSlicer Slicer where
     nilS = NilS
     allCons = AllCons
