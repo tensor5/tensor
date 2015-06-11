@@ -23,13 +23,7 @@
 --
 --------------------------------------------------------------------------------
 
-module Data.Sliceable
-    ( Key
-    , Slicer(..)
-    , SlicerShape(..)
-    , IsSlicer(..)
-    , Sliceable(..)
-    ) where
+module Data.Sliceable where
 
 import           Data.Singletons
 

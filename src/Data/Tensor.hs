@@ -29,17 +29,7 @@
 --
 --------------------------------------------------------------------------------
 
-module Data.Tensor
-    ( IsTensor(..)
-    , Append(..), AppendI(..)
-    , TensorException(..)
-    , vector2RowVector
-    , rowVector2Vector
-    , Tensor(..)
-    , Vector, Matrix
-    , ColumnVector, RowVector
-    , Slicer(..)
-    ) where
+module Data.Tensor where
 
 import           Control.Applicative
 import           Control.Arrow

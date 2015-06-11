@@ -27,16 +27,7 @@
 --
 --------------------------------------------------------------------------------
 
-module Data.MultiIndex
-    ( PI(..)
-    , Sing(SOne, SS)
-    , SPI
-    , Shape
-    , fromPI
-    , IsMultiIndex(..)
-    , fromShape
-    , MultiIndex(..)
-    ) where
+module Data.MultiIndex where
 
 import           Data.Singletons
 import           Data.Singletons.Prelude.List
