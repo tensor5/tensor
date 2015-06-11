@@ -186,10 +186,10 @@ instance SingI is ⇒ Applicative (Tensor is) where
 
 ------------------------------------  Show  ------------------------------------
 
-instance Show e ⇒  Show (Tensor is e) where
 -- | Rank 0 @'Tensor'@s are shown as a single element, rank 1 as lists, rank 2
 -- as lists of lists, and so on, using [row-major
 -- order](http://en.wikipedia.org/wiki/Row-major_order).
+instance Show e ⇒ Show (Tensor is e) where
     showsPrec n (T0 e)    = showsPrec n e
     showsPrec n (T1 t)    = ('[':) ∘ showsPrec n t ∘ (']':)
     showsPrec n (t :| ts) =

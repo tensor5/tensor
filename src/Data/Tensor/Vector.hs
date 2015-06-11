@@ -191,10 +191,10 @@ instance SingI is ⇒ Applicative (Tensor is) where
 
 ------------------------------------  Show  ------------------------------------
 
-instance Show e => Show (Tensor i e) where
 -- | Rank 0 @'Tensor'@s are shown as a single element, rank 1 as lists, rank 2
 -- as lists of lists, and so on, using [row-major
 -- order](http://en.wikipedia.org/wiki/Row-major_order).
+instance Show e ⇒ Show (Tensor i e) where
     showsPrec _ (Tensor ds v) =
         let sd = reverse ds
             l = length v
@@ -424,9 +424,9 @@ sliceSize sh = fromIntegral ∘ ifoldr' (\i m acc → case m of
 
 sliceSh ∷ V.Vector (Maybe Word) → U.Vector Word → U.Vector Word
 sliceSh sl = ifilter (\i _ → case sl G.! i of
-                                Nothing → True
-                                _       → False
-                      )
+                               Nothing → True
+                               _       → False
+                     )
 
 -- | An @'IsSlicer'@ type optimized for slicing @'Tensor'@. It is internally
 -- represented as a @'V.Vector'@ of @'Maybe' 'Word'@.
