@@ -1,10 +1,14 @@
-{-# LANGUAGE DataKinds        #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE GADTs            #-}
-{-# LANGUAGE PolyKinds        #-}
-{-# LANGUAGE Trustworthy      #-}
-{-# LANGUAGE TypeFamilies     #-}
-{-# LANGUAGE TypeOperators    #-}
+{-# LANGUAGE DataKinds              #-}
+{-# LANGUAGE FlexibleContexts       #-}
+{-# LANGUAGE FlexibleInstances      #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE GADTs                  #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE PolyKinds              #-}
+{-# LANGUAGE Trustworthy            #-}
+{-# LANGUAGE TypeFamilies           #-}
+{-# LANGUAGE TypeOperators          #-}
+{-# LANGUAGE UndecidableInstances   #-}
 
 --------------------------------------------------------------------------------
 -- |
@@ -59,6 +63,27 @@ data SlicerShape ∷ [χ] → [Maybe χ] → [χ] → * where
               → SlicerShape is js ks
               → SlicerShape (i ': is) ('Just i ': js) ks
 
+-- | Class for implicit @'SlicerShape'@ parameter.
+class SlicerShapeI (is ∷ [χ]) (js ∷ [Maybe χ]) (ks ∷ [χ]) | is js → ks where
+    slicerShape ∷ SlicerShape is js ks
+
+-- | No selection can be done on an empty list (@'slicerShape' = 'NilSh'@).
+instance SlicerShapeI '[] '[] '[] where
+    slicerShape = NilSh
+
+-- | No selection on the first component (@'slicerShape' = 'AllConsSh'
+-- 'slicerShape'@).
+instance SlicerShapeI is js ks ⇒
+    SlicerShapeI (i ': is) ('Nothing ': js) (i ': ks) where
+    slicerShape = AllConsSh slicerShape
+
+-- | Select something on the first component (@'slicerShape' = 'sing' ':$'
+-- 'slicerShape'@).
+instance ( SingI i
+         , SlicerShapeI is js ks
+         ) ⇒ SlicerShapeI (i ': is) ('Just i ': js) ks where
+    slicerShape = sing :$ slicerShape
+
 -- | Class of types isomorphic to @'Slicer'@. Instances should satisfy the
 -- following properties:
 --
@@ -68,9 +93,9 @@ data SlicerShape ∷ [χ] → [Maybe χ] → [χ] → * where
 --
 -- @'fromSlicer' '.' (':&') k ≡ ('&') k '.' 'fromSlicer'@
 --
--- @'toSlicer' sh '.' 'fromSlicer' ≡ 'id'@
+-- @'toSlicer' '.' 'fromSlicer' ≡ 'id'@
 --
--- @'fromSlicer' '.' 'toSlicer' sh ≡ 'id'@
+-- @'fromSlicer' '.' 'toSlicer' ≡ 'id'@
 class IsSlicer (s ∷ [χ] → [Maybe χ] → [χ] → *) where
     nilS ∷ s '[] '[] '[]
     allCons ∷ s is js ks → s (i ': is) ('Nothing ': js) (i ': ks)
@@ -79,15 +104,15 @@ class IsSlicer (s ∷ [χ] → [Maybe χ] → [χ] → *) where
     fromSlicer NilS = nilS
     fromSlicer (AllCons sl) = allCons $ fromSlicer sl
     fromSlicer (k :& sl) = k & fromSlicer sl
-    toSlicer ∷ SlicerShape is js ks → s is js ks → Slicer is js ks
+    toSlicer ∷ SlicerShapeI is js ks ⇒ s is js ks → Slicer is js ks
 
--- | Trivial instance (@'fromSlicer' = 'id'@, @'toSlicer' _ = 'id'@).
+-- | Trivial instance (@'fromSlicer' = 'id'@, @'toSlicer' = 'id'@).
 instance IsSlicer Slicer where
     nilS = NilS
     allCons = AllCons
     (&) = (:&)
     fromSlicer = id
-    toSlicer _ = id
+    toSlicer = id
 
 -- | Class of types that allow taking a @'slice'@, i.e. specifying the values of
 -- a subset of keys. The selection of key values is expressed by the @'Sl'@

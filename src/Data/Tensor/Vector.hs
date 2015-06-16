@@ -438,13 +438,17 @@ instance IsSlicer Slicer where
     nilS = Slicer G.empty
     allCons = Slicer ∘ cons Nothing ∘ unSl
     (&) i = Slicer ∘ cons (Just $ head $ unMultiIndex $ fromMultiIndex i) ∘ unSl
-    toSlicer NilSh          = const NilS
-    toSlicer (AllConsSh sh) = AllCons ∘ toSlicer sh ∘ Slicer ∘ tail ∘ unSl
-    toSlicer (SOne :$ ssh)  =
-        (:&) (OneCons Nil) ∘ toSlicer ssh ∘ Slicer ∘ tail ∘ unSl
-    toSlicer (SS n :$ ssh)  =
-        bumpSl ∘ toSlicer (n :$ ssh) ∘ Slicer ∘ predJHead ∘ unSl
-        where bumpSl ∷ S.Slicer (i ': is) ('Just i ': js) ks
+    toSlicer = toSlicer' slicerShape
+        where toSlicer' ∷ SlicerShape is js ks
+                        → Slicer is js ks → S.Slicer is js ks
+              toSlicer' NilSh          = const NilS
+              toSlicer' (AllConsSh sh) =
+                  AllCons ∘ toSlicer' sh ∘ Slicer ∘ tail ∘ unSl
+              toSlicer' (SOne :$ ssh)  =
+                  (:&) (OneCons Nil) ∘ toSlicer' ssh ∘ Slicer ∘ tail ∘ unSl
+              toSlicer' (SS n :$ ssh)  =
+                  bumpSl ∘ toSlicer' (n :$ ssh) ∘ Slicer ∘ predJHead ∘ unSl
+              bumpSl ∷ S.Slicer (i ': is) ('Just i ': js) ks
                      → S.Slicer ('S i ': is) ('Just ('S i) ': js) ks
               bumpSl (i :& s) = HeadSucc i :& s
               predJHead ∷ V.Vector (Maybe Word) → V.Vector (Maybe Word)

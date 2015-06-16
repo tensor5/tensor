@@ -356,11 +356,15 @@ instance IsSlicer Slicer where
     allCons = AllCons
     OneCons _  & sl = OneConsSl sl
     HeadSucc i & sl = HeadSuccSl (i & sl)
-    toSlicer _ NilS = S.NilS
-    toSlicer _ (AllCons    sl) = S.AllCons $ toSlicer undefined sl
-    toSlicer _ (OneConsSl  sl) = OneCons Nil :& toSlicer undefined sl
-    toSlicer _ (HeadSuccSl sl) = bumpSl $ toSlicer undefined sl
-        where bumpSl ∷ S.Slicer (i ': is) ('Just i ': js) ks
+    toSlicer = toSlicer' slicerShape
+        where toSlicer' ∷ SlicerShape is js ks
+                        → Slicer is js ks → S.Slicer is js ks
+              toSlicer' _ NilS            = S.NilS
+              toSlicer' _ (AllCons    sl) = S.AllCons $ toSlicer' undefined sl
+              toSlicer' _ (OneConsSl  sl) =
+                  OneCons Nil :& toSlicer' undefined sl
+              toSlicer' _ (HeadSuccSl sl) = bumpSl $ toSlicer' undefined sl
+              bumpSl ∷ S.Slicer (i ': is) ('Just i ': js) ks
                      → S.Slicer ('S i ': is) ('Just ('S i) ': js) ks
               bumpSl (i :& s) = HeadSucc i :& s
 
