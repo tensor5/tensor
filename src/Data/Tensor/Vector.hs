@@ -407,7 +407,7 @@ sliceV v sh sl = G.generate (sliceSize sh sl) (\x → v G.! f sh ks sl 0 x)
               | null zh   = acc
               | otherwise = case head zl of
                               Just i  → f (tail zh) (tail js) (tail zl)
-                                        (acc + fromIntegral (i ⋅ head js))
+                                        (acc + fromIntegral (pred i ⋅ head js))
                                         x
                               Nothing → let (q,r) = quotRem x
                                                     (sliceSize (tail zh)
