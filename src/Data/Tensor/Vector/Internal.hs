@@ -8,10 +8,12 @@ module Data.Tensor.Vector.Internal where
 
 import           Control.Applicative
 import           Data.Cardinal
+import qualified Data.Foldable                     as F
 import           Data.Tensor                       hiding (Tensor)
 import qualified Data.Tensor                       as T
 import           Data.Tensor.LinearAlgebra         hiding (Matrix)
 import qualified Data.Tensor.LinearAlgebra         as LA
+import qualified Data.Traversable                  as TR
 import           Data.TypeList.MultiIndex          hiding (drop, head, length,
                                                     tail, take, (!!))
 import qualified Data.TypeList.MultiIndex          as M
@@ -80,6 +82,19 @@ instance Functor (Tensor i) where
 instance MultiIndex i => Applicative (Tensor i) where
     pure e = T.replicate e
     (Tensor is f) <*> (Tensor _ v) = Tensor is (V.zipWith ($) f v)
+
+
+instance MultiIndex i => F.Foldable (Tensor i) where
+    foldMap f (Tensor _ v) = F.foldMap f v
+    foldr f z (Tensor _ v) = F.foldr f z v
+    foldr' f z (Tensor _ v) = F.foldr' f z v
+    foldl f z (Tensor _ v) = F.foldl f z v
+    foldl' f z (Tensor _ v) = F.foldl' f z v
+
+
+instance MultiIndex i => TR.Traversable (Tensor i) where
+    traverse f (Tensor i v) = Tensor i <$> TR.traverse f v
+    sequenceA (Tensor i v) = Tensor i <$> TR.sequenceA v
 
 
 fromVector :: MultiIndex i => V.Vector e -> (Tensor i e)

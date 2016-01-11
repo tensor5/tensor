@@ -51,10 +51,12 @@ module Data.Ordinal
 
     ) where
 
+import           Control.Applicative as A
 import           Data.Cardinal    hiding (Succ)
 import qualified Data.Cardinal    as C
 import           Data.Ord         ()
 import           Data.TypeAlgebra
+import           Data.TypeAlgebra as TA
 import qualified GHC.Generics     as G
 import           System.Random
 
@@ -151,6 +153,11 @@ instance Functor Succ where
     fmap _ First = First
     fmap f (Succ x) = Succ (f x)
 
+instance A.Applicative Succ where
+    pure = return
+    (Succ f) <*> (Succ x) = Succ (f x)
+    _        <*> _        = First
+
 instance Monad Succ where
     First >>= _ = First
     (Succ x) >>= f = f x
@@ -189,5 +196,5 @@ instance (Ordinal m, Ordinal n, Prod m n, Sum m (m :*: n), Ordinal (m :+: (m :*:
     => Prod m (Succ n) where
         type m :*: Succ n = m :+: (m :*: n)
         x <*> First = toOrdinal (fromOrdinal x :: Integer)
-        x <*> (Succ y) = x <+> (x <*> y)
+        x <*> (Succ y) = x <+> (x TA.<*> y)
 
